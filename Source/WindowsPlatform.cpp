@@ -15,6 +15,8 @@
 
 static bool QuitRequested = false;
 
+extern bool MessageHandlerOverride(HWND window, UINT message, WPARAM wParam, LPARAM lParam);
+
 namespace Platform
 {
 
@@ -73,6 +75,11 @@ void ProcessEvents()
 
 static LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	if (MessageHandlerOverride(window, message, wParam, lParam))
+	{
+		return true;
+	}
+
 	if (message == WM_DESTROY)
 	{
 		PostQuitMessage(0);
@@ -143,6 +150,13 @@ void WindowShow(Window& window)
 	ShowWindow(static_cast<HWND>(window.Handle), SW_SHOWNORMAL);
 }
 
+}
+
+extern void Start();
+
+int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
+{
+	Start();
 }
 
 #endif
