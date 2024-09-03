@@ -26,6 +26,8 @@ function UseWindowsSettings()
 		toolset "Msc"
 		architecture "x86_64"
 
+		disablewarnings "4100"
+
 	filter {}
 end
 
