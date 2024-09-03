@@ -28,6 +28,10 @@ void MemoryMove(void* destination, const void* source, usize size);
 void* Allocate(usize size);
 void Deallocate(void* ptr);
 
+usize StringLength(const char* s);
+void StringPrint(const char* format, char* buffer, usize bufferSize, ...);
+void Log(const char* message);
+
 void FatalError(const char* errorMessage);
 
 bool IsQuitRequested();

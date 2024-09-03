@@ -47,6 +47,25 @@ void Deallocate(void* ptr)
 	CHECK(result);
 }
 
+usize StringLength(const char* s)
+{
+	return strlen(s);
+}
+
+void StringPrint(const char* format, char* buffer, usize bufferSize, ...)
+{
+	va_list args;
+	va_start(args, bufferSize);
+	const int result = vsnprintf(buffer, bufferSize, format, args);
+	CHECK(result);
+	va_end(args);
+}
+
+void Log(const char* message)
+{
+	OutputDebugStringA(message);
+}
+
 void FatalError(const char* errorMessage)
 {
 	MessageBoxA(nullptr, errorMessage, "Fatal Error!", MB_ICONERROR);
