@@ -252,6 +252,45 @@ public:
 		};
 	}
 
+	Matrix Inverse() const
+	{
+		const Vector a = { M00, M10, M20 };
+		const Vector b = { M01, M11, M21 };
+		const Vector c = { M02, M12, M22 };
+		const Vector d = { M03, M13, M23 };
+
+		const float x = M30;
+		const float y = M31;
+		const float z = M32;
+		const float w = M33;
+
+		Vector s = a.Cross(b);
+		Vector t = c.Cross(d);
+		Vector u = a * y - b * x;
+		Vector v = c * w - d * z;
+
+		const float determinant = s.Dot(v) + t.Dot(u);
+		CHECK(determinant != 0.0f);
+		const float inverseDeterminant = 1.0f / determinant;
+		s = s * inverseDeterminant;
+		t = t * inverseDeterminant;
+		u = u * inverseDeterminant;
+		v = v * inverseDeterminant;
+
+		const Vector v0 = b.Cross(v) + t * y;
+		const Vector v1 = v.Cross(a) - t * x;
+		const Vector v2 = d.Cross(u) + s * w;
+		const Vector v3 = u.Cross(c) - s * z;
+
+		return Matrix
+		{
+			v0.X, v0.Y, v0.Z, -b.Dot(t),
+			v1.X, v1.Y, v1.Z,  a.Dot(t),
+			v2.X, v2.Y, v2.Z, -d.Dot(s),
+			v3.X, v3.Y, v3.Z,  c.Dot(s),
+		};
+	}
+
 	float M00, M10, M20, M30;
 	float M01, M11, M21, M31;
 	float M02, M12, M22, M32;
