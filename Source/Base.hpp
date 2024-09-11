@@ -15,3 +15,6 @@ using usize = unsigned long long;
 #define ARRAY_COUNT(a) (sizeof((a)) / sizeof(*(a)))
 
 #define INDEX_NONE (~static_cast<usize>(0))
+
+#define TOKEN_PASTE_(a, b) a##b
+#define TOKEN_PASTE(a, b) TOKEN_PASTE_(a, b)
