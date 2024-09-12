@@ -9,7 +9,6 @@
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#undef CreateWindow
 
 #include <stdio.h>
 
@@ -130,7 +129,7 @@ static LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPA
 	return DefWindowProcA(window, message, wParam, lParam);
 }
 
-Window WindowCreate(const char* name, int32 drawWidth, int32 drawHeight)
+Window MakeWindow(const char* name, int32 drawWidth, int32 drawHeight)
 {
 	BOOL result = SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 	CHECK(result);
@@ -180,14 +179,14 @@ Window WindowCreate(const char* name, int32 drawWidth, int32 drawHeight)
 	return Window { window, windowClassName, drawWidth, drawHeight };
 }
 
-void WindowDestroy(Window& window)
+void DestroyWindow(Window& window)
 {
 	DestroyWindow(static_cast<HWND>(window.Handle));
 	UnregisterClassA(static_cast<char*>(window.OsExtra), GetModuleHandleA(nullptr));
 	GlobalDeallocate(window.OsExtra);
 }
 
-void WindowShow(Window& window)
+void ShowWindow(Window& window)
 {
 	ShowWindow(static_cast<HWND>(window.Handle), SW_SHOWNORMAL);
 }

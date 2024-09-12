@@ -39,8 +39,8 @@ void FatalError(const char* errorMessage);
 bool IsQuitRequested();
 void ProcessEvents();
 
-Window WindowCreate(const char* name, int32 drawWidth, int32 drawHeight);
-void WindowDestroy(Window& window);
-void WindowShow(Window& window);
+Window MakeWindow(const char* name, int32 drawWidth, int32 drawHeight);
+void DestroyWindow(Window& window);
+void ShowWindow(Window& window);
 
 }
