@@ -32,6 +32,8 @@ usize StringLength(const char* s);
 void StringPrint(const char* format, char* buffer, usize bufferSize, ...);
 void Log(const char* message);
 
+uint8* ReadEntireFile(const char* filePath, usize* outSize);
+
 void FatalError(const char* errorMessage);
 
 bool IsQuitRequested();

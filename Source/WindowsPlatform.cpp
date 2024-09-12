@@ -66,6 +66,29 @@ void Log(const char* message)
 	OutputDebugStringA(message);
 }
 
+uint8* ReadEntireFile(const char* filePath, usize* outSize)
+{
+	CHECK(outSize);
+
+	const HANDLE file = CreateFileA(filePath, GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+	VERIFY(file, "Failed to open file!");
+
+	LARGE_INTEGER fileSize = {};
+	CHECK(SUCCEEDED(GetFileSizeEx(file, &fileSize)));
+	CHECK(fileSize.HighPart == 0);
+	*outSize = fileSize.LowPart;
+
+	uint8* fileData = static_cast<uint8*>(GlobalAllocate(fileSize.LowPart));
+	CHECK(fileData);
+
+	DWORD readSize = 0;
+	CHECK(SUCCEEDED(ReadFile(file, fileData, fileSize.LowPart, &readSize, nullptr)));
+	VERIFY(fileSize.LowPart == readSize, "Failed to read entire file!");
+
+	CHECK(SUCCEEDED(CloseHandle(file)));
+	return fileData;
+}
+
 void FatalError(const char* errorMessage)
 {
 	MessageBoxA(nullptr, errorMessage, "Fatal Error!", MB_ICONERROR);
