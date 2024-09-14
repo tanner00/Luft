@@ -3,7 +3,14 @@
 #include "Base.hpp"
 #include "Error.hpp"
 
+inline constexpr float Pi = 3.14159265358979323846f;
+inline constexpr float DegreesToRadians = Pi / 180.0f;
+inline constexpr float RadiansToDegrees = 180.0f / Pi;
+
 float SquareRoot(float x);
+
+float Sine(float x);
+float Cosine(float x);
 float Tangent(float x);
 
 template<typename T>
