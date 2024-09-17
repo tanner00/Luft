@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+
+<Type Name="TrivialArray&lt;*&gt;">
+	<DisplayString>{{ Length = {Length}, Capacity = {Capacity} }}</DisplayString>
+	<Expand>
+		<ArrayItems>
+			<Size>Length</Size>
+			<ValuePointer>Elements</ValuePointer>
+		</ArrayItems>
+	</Expand>
+</Type>
+
+<Type Name="StringView">
+	<DisplayString>{{ Length = {Length}, {Buffer,[Length]s8} }}</DisplayString>
+	<StringView>{Buffer,[Length]s8}</StringView>
+	<Expand>
+		<ArrayItems>
+			<Size>Length</Size>
+			<ValuePointer>Buffer</ValuePointer>
+		</ArrayItems>
+	</Expand>
+</Type>
+
+<Type Name="String">
+	<DisplayString>{{ Length = {Length}, Capacity = {Capacity}, {Buffer,[Length]s8} }}</DisplayString>
+	<StringView>{Buffer,[Length]s8}</StringView>
+	<Expand>
+		<ArrayItems>
+			<Size>Length</Size>
+			<ValuePointer>Buffer</ValuePointer>
+		</ArrayItems>
+	</Expand>
+</Type>
+
+</AutoVisualizer>

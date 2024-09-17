@@ -7,6 +7,6 @@ project "Erde"
 	UseWindowsSettings()
 
 	includedirs { "Source" }
-	files { "Source/**.cpp", "Source/**.hpp" }
+	files { "Source/**.cpp", "Source/**.hpp", "Erde.natvis" }
 
 	filter {}
