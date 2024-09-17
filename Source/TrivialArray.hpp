@@ -177,6 +177,15 @@ public:
 		Length = 0;
 	}
 
+	T* Surrender()
+	{
+		T* data = Elements;
+		Elements = nullptr;
+		Length = 0;
+		Capacity = 0;
+		return data;
+	}
+
 	TrivialArrayIterator<T> begin()
 	{
 		return TrivialArrayIterator<T>(Elements);
