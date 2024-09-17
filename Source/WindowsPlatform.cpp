@@ -46,16 +46,16 @@ void Deallocate(void* ptr)
 	CHECK(result);
 }
 
-usize StringLength(const char* s)
+usize StringLength(const char* sNullTerminated)
 {
-	return strlen(s);
+	return strlen(sNullTerminated);
 }
 
-void StringPrint(const char* format, char* buffer, usize bufferSize, ...)
+void StringPrint(const char* formatNullTerminated, char* buffer, usize bufferSize, ...)
 {
 	va_list args;
 	va_start(args, bufferSize);
-	const int result = vsnprintf(buffer, bufferSize, format, args);
+	const int result = vsnprintf(buffer, bufferSize, formatNullTerminated, args);
 	CHECK(result);
 	va_end(args);
 }
@@ -65,11 +65,15 @@ void Log(const char* message)
 	OutputDebugStringA(message);
 }
 
-uint8* ReadEntireFile(const char* filePath, usize* outSize)
+uint8* ReadEntireFile(const char* filePathNullTerminated, usize* outSize)
 {
 	CHECK(outSize);
 
-	const HANDLE file = CreateFileA(filePath, GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+	const DWORD fileAttributes = GetFileAttributesA(filePathNullTerminated);
+	const bool fileExists = fileAttributes != INVALID_FILE_ATTRIBUTES && !(fileAttributes & FILE_ATTRIBUTE_DIRECTORY);
+	VERIFY(fileExists, "Attempted to open a file that doesn't exist!");
+
+	const HANDLE file = CreateFileA(filePathNullTerminated, GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 	VERIFY(file, "Failed to open file!");
 
 	LARGE_INTEGER fileSize = {};
@@ -88,9 +92,9 @@ uint8* ReadEntireFile(const char* filePath, usize* outSize)
 	return fileData;
 }
 
-void FatalError(const char* errorMessage)
+void FatalError(const char* errorMessageNullTerminated)
 {
-	MessageBoxA(nullptr, errorMessage, "Fatal Error!", MB_ICONERROR);
+	MessageBoxA(nullptr, errorMessageNullTerminated, "Fatal Error!", MB_ICONERROR);
 	ExitProcess(1);
 }
 

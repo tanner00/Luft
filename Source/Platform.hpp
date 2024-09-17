@@ -28,13 +28,13 @@ void MemoryMove(void* destination, const void* source, usize size);
 void* Allocate(usize size);
 void Deallocate(void* ptr);
 
-usize StringLength(const char* s);
-void StringPrint(const char* format, char* buffer, usize bufferSize, ...);
-void Log(const char* message);
+usize StringLength(const char* sNullTerminated);
+void StringPrint(const char* formatNullTerminated, char* buffer, usize bufferSize, ...);
+void Log(const char* messageNullTerminated);
 
-uint8* ReadEntireFile(const char* filePath, usize* outSize);
+uint8* ReadEntireFile(const char* filePathNullTerminated, usize* outSize);
 
-void FatalError(const char* errorMessage);
+void FatalError(const char* errorMessageNullTerminated);
 
 bool IsQuitRequested();
 void ProcessEvents();
