@@ -24,6 +24,7 @@ struct Window
 
 void MemoryCopy(void* destination, const void* source, usize size);
 void MemoryMove(void* destination, const void* source, usize size);
+bool StringCompare(const char* a, usize aLength, const char* b, usize bLength);
 
 void* Allocate(usize size);
 void Deallocate(void* ptr);

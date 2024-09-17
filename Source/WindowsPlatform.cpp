@@ -29,6 +29,13 @@ void MemoryMove(void* destination, const void* source, usize size)
 	memmove(destination, source, size);
 }
 
+bool StringCompare(const char* a, usize aLength, const char* b, usize bLength)
+{
+	const usize maxLength = aLength > bLength ? aLength : bLength;
+	const bool areEqual = strncmp(a, b, maxLength) == 0;
+	return areEqual;
+}
+
 void* Allocate(usize size)
 {
 	const HANDLE heap = GetProcessHeap();
