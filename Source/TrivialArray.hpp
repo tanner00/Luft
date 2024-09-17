@@ -59,7 +59,7 @@ public:
 		const usize size = Capacity * sizeof(T);
 
 		T* newElements = static_cast<T*>(GlobalAllocate(size));
-		Platform::MemoryCopy(newElements, copy.Elements, size);
+		Platform::MemoryCopy(newElements, copy.Elements, Length * sizeof(T));
 		Elements = newElements;
 	}
 
@@ -69,7 +69,7 @@ public:
 
 		const usize newSize = copy.Capacity * sizeof(T);
 		T* newElements = static_cast<T*>(GlobalAllocate(newSize));
-		Platform::MemoryCopy(newElements, copy.Elements, newSize);
+		Platform::MemoryCopy(newElements, copy.Elements, copy.Length * sizeof(T));
 		Elements = newElements;
 
 		Length = copy.Length;
