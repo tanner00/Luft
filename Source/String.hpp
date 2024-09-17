@@ -75,6 +75,8 @@ public:
 	{
 		CHECK(&copy != this);
 
+		this->~String();
+
 		uint8* newBuffer = static_cast<uint8*>(GlobalAllocate(copy.Capacity));
 		Platform::MemoryCopy(newBuffer, copy.Buffer, copy.Capacity);
 		Buffer = newBuffer;

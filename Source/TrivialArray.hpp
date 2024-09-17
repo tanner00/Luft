@@ -67,6 +67,8 @@ public:
 	{
 		CHECK(&copy != this);
 
+		this->~TrivialArray();
+
 		const usize newSize = copy.Capacity * sizeof(T);
 		T* newElements = static_cast<T*>(GlobalAllocate(newSize));
 		Platform::MemoryCopy(newElements, copy.Elements, copy.Length * sizeof(T));
