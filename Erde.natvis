@@ -2,8 +2,8 @@
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
 
 <Type Name="TrivialArray&lt;*&gt;">
-	<DisplayString>{{ Length = {Length}, Capacity = {Capacity} }}</DisplayString>
-	<Expand>
+	<DisplayString>Length = {Length}, Capacity = {Capacity}</DisplayString>
+	<Expand HideRawView="1">
 		<ArrayItems>
 			<Size>Length</Size>
 			<ValuePointer>Elements</ValuePointer>
@@ -12,9 +12,9 @@
 </Type>
 
 <Type Name="StringView">
-	<DisplayString>{{ Length = {Length}, {Buffer,[Length]s8} }}</DisplayString>
+	<DisplayString>Length = {Length}, {Buffer,[Length]s8}</DisplayString>
 	<StringView>{Buffer,[Length]s8}</StringView>
-	<Expand>
+	<Expand HideRawView="1">
 		<ArrayItems>
 			<Size>Length</Size>
 			<ValuePointer>Buffer</ValuePointer>
@@ -23,13 +23,26 @@
 </Type>
 
 <Type Name="String">
-	<DisplayString>{{ Length = {Length}, Capacity = {Capacity}, {Buffer,[Length]s8} }}</DisplayString>
+	<DisplayString>Length = {Length}, Capacity = {Capacity}, {Buffer,[Length]s8}</DisplayString>
 	<StringView>{Buffer,[Length]s8}</StringView>
-	<Expand>
+	<Expand HideRawView="1">
 		<ArrayItems>
 			<Size>Length</Size>
 			<ValuePointer>Buffer</ValuePointer>
 		</ArrayItems>
+	</Expand>
+</Type>
+
+<Type Name="Vector">
+	<DisplayString>[ {X} {Y} {Z} ]</DisplayString>
+</Type>
+
+<Type Name="Matrix">
+	<Expand HideRawView="1">
+		<Item Name="Column 0">&amp;M00,[4]na</Item>
+		<Item Name="Column 1">&amp;M01,[4]na</Item>
+		<Item Name="Column 2">&amp;M02,[4]na</Item>
+		<Item Name="Column 3">&amp;M03,[4]na</Item>
 	</Expand>
 </Type>
 
