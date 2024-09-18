@@ -298,6 +298,17 @@ public:
 		};
 	}
 
+	Matrix Transpose() const
+	{
+		return Matrix
+		{
+			M00, M01, M02, M03,
+			M10, M11, M12, M13,
+			M20, M21, M22, M23,
+			M30, M31, M32, M33,
+		};
+	}
+
 	float M00, M10, M20, M30;
 	float M01, M11, M21, M31;
 	float M02, M12, M22, M32;
