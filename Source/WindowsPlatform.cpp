@@ -67,9 +67,9 @@ void StringPrint(const char* formatNullTerminated, char* buffer, usize bufferSiz
 	va_end(args);
 }
 
-void Log(const char* message)
+void Log(const char* messageNullTerminated)
 {
-	OutputDebugStringA(message);
+	OutputDebugStringA(messageNullTerminated);
 }
 
 uint8* ReadEntireFile(const char* filePathNullTerminated, usize* outSize)
