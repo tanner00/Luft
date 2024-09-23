@@ -12,9 +12,14 @@
 
 #include <stdio.h>
 
-static bool QuitRequested = false;
+using MessageHandler = bool(*)(void*, uint32, uint64, uint64);
+bool NoopMessageHandler(void*, uint32, uint64, uint64)
+{
+	return false;
+}
 
-extern bool MessageHandlerOverride(HWND window, UINT message, WPARAM wParam, LPARAM lParam);
+static MessageHandler MessageHandlerOverride = NoopMessageHandler;
+static bool QuitRequested = false;
 
 namespace Platform
 {
