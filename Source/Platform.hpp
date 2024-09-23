@@ -23,6 +23,7 @@ struct Window
 };
 
 using MessageHandler = bool(*)(void*, uint32, uint64, uint64);
+using ResizeHandler = void(*)(Window* window);
 
 void MemoryCopy(void* destination, const void* source, usize size);
 void MemoryMove(void* destination, const void* source, usize size);
@@ -42,10 +43,11 @@ void FatalError(const char* errorMessageNullTerminated);
 bool IsQuitRequested();
 void ProcessEvents();
 
-Window MakeWindow(const char* name, int32 drawWidth, int32 drawHeight);
-void DestroyWindow(Window& window);
-void ShowWindow(Window& window);
+Window* MakeWindow(const char* name, int32 drawWidth, int32 drawHeight);
+void DestroyWindow(Window* window);
+void ShowWindow(Window* window);
 
 void InstallMessageHandler(MessageHandler handler);
+void InstallResizeHandler(ResizeHandler handler);
 
 }

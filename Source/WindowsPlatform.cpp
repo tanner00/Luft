@@ -12,12 +12,17 @@
 
 #include <stdio.h>
 
-bool NoopMessageHandler(void*, uint32, uint64, uint64)
+static bool NoopMessageHandler(void*, uint32, uint64, uint64)
 {
 	return false;
 }
 
+static void NoopResizeHandler(Platform::Window*)
+{
+}
+
 static Platform::MessageHandler MessageHandlerOverride = NoopMessageHandler;
+static Platform::ResizeHandler ResizeHandlerOverride = NoopResizeHandler;
 static bool QuitRequested = false;
 
 namespace Platform
@@ -136,15 +141,27 @@ static LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPA
 		return true;
 	}
 
-	if (message == WM_DESTROY)
+	switch (message)
 	{
+	case WM_DESTROY:
 		PostQuitMessage(0);
 		return 0;
+	case WM_SIZE:
+	{
+		Window* userWindow = reinterpret_cast<Window*>(GetWindowLongPtrA(window, 0));
+		CHECK(userWindow);
+		userWindow->DrawWidth = LOWORD(lParam);
+		userWindow->DrawHeight = HIWORD(lParam);
+		ResizeHandlerOverride(userWindow);
+		return 0;
+	}
+	default:
+		break;
 	}
 	return DefWindowProcA(window, message, wParam, lParam);
 }
 
-Window MakeWindow(const char* name, int32 drawWidth, int32 drawHeight)
+Window* MakeWindow(const char* name, int32 drawWidth, int32 drawHeight)
 {
 	BOOL result = SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 	CHECK(result);
@@ -160,6 +177,7 @@ Window MakeWindow(const char* name, int32 drawWidth, int32 drawHeight)
 	{
 		.cbSize = sizeof(windowClass),
 		.lpfnWndProc = WindowProc,
+		.cbWndExtra = sizeof(Window*),
 		.hInstance = instance,
 		.hIcon = LoadIconA(nullptr, IDI_APPLICATION),
 		.hCursor = LoadCursorA(nullptr, IDC_ARROW),
@@ -169,7 +187,7 @@ Window MakeWindow(const char* name, int32 drawWidth, int32 drawHeight)
 	CHECK(atom);
 
 	constexpr DWORD exStyle = WS_EX_APPWINDOW;
-	constexpr DWORD style = WS_OVERLAPPEDWINDOW & (~WS_THICKFRAME & ~WS_MAXIMIZEBOX);
+	constexpr DWORD style = WS_OVERLAPPEDWINDOW;
 
 	RECT windowRect = { 0, 0, drawWidth, drawHeight };
 	AdjustWindowRectExForDpi(&windowRect, style, FALSE, exStyle, GetDpiForSystem());
@@ -178,6 +196,9 @@ Window MakeWindow(const char* name, int32 drawWidth, int32 drawHeight)
 										0, 0, windowRect.right - windowRect.left, windowRect.bottom - windowRect.top,
 										nullptr, nullptr, instance, nullptr);
 	CHECK(window);
+
+	Window* userWindow = GlobalCreate<Window>(window, windowClassName, drawWidth, drawHeight);
+	CHECK(SUCCEEDED(SetWindowLongPtrA(window, 0, reinterpret_cast<int64>(userWindow))));
 
 	const HMONITOR monitor = MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST);
 	CHECK(monitor);
@@ -191,24 +212,30 @@ Window MakeWindow(const char* name, int32 drawWidth, int32 drawHeight)
 	const int32 windowPositionY = (monitorInfo.rcWork.top + monitorInfo.rcWork.bottom) / 2 - drawHeight / 2;
 	SetWindowPos(window, nullptr, windowPositionX, windowPositionY, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
 
-	return Window { window, windowClassName, drawWidth, drawHeight };
+	return userWindow;
 }
 
-void DestroyWindow(Window& window)
+void DestroyWindow(Window* window)
 {
-	DestroyWindow(static_cast<HWND>(window.Handle));
-	UnregisterClassA(static_cast<char*>(window.OsExtra), GetModuleHandleA(nullptr));
-	GlobalDeallocate(window.OsExtra);
+	DestroyWindow(static_cast<HWND>(window->Handle));
+	UnregisterClassA(static_cast<char*>(window->OsExtra), GetModuleHandleA(nullptr));
+	GlobalDeallocate(window->OsExtra);
+	GlobalDeallocate(window);
 }
 
-void ShowWindow(Window& window)
+void ShowWindow(Window* window)
 {
-	ShowWindow(static_cast<HWND>(window.Handle), SW_SHOWNORMAL);
+	ShowWindow(static_cast<HWND>(window->Handle), SW_SHOWNORMAL);
 }
 
 void InstallMessageHandler(MessageHandler handler)
 {
 	MessageHandlerOverride = handler;
+}
+
+void InstallResizeHandler(ResizeHandler handler)
+{
+	ResizeHandlerOverride = handler;
 }
 
 }
