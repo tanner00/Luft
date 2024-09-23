@@ -12,17 +12,17 @@
 
 #include <stdio.h>
 
-static bool NoopMessageHandler(void*, uint32, uint64, uint64)
+static bool NoOpMessageHandler(void*, uint32, uint64, uint64)
 {
 	return false;
 }
 
-static void NoopResizeHandler(Platform::Window*)
+static void NoOpResizeHandler(Platform::Window*)
 {
 }
 
-static Platform::MessageHandler MessageHandlerOverride = NoopMessageHandler;
-static Platform::ResizeHandler ResizeHandlerOverride = NoopResizeHandler;
+static Platform::MessageHandler MessageHandlerOverride = NoOpMessageHandler;
+static Platform::ResizeHandler ResizeHandlerOverride = NoOpResizeHandler;
 static bool QuitRequested = false;
 
 namespace Platform
