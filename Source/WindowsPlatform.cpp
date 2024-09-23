@@ -181,6 +181,7 @@ Window* MakeWindow(const char* name, int32 drawWidth, int32 drawHeight)
 		.hInstance = instance,
 		.hIcon = LoadIconA(nullptr, IDI_APPLICATION),
 		.hCursor = LoadCursorA(nullptr, IDC_ARROW),
+		.hbrBackground = static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH)),
 		.lpszClassName = windowClassName,
 	};
 	const ATOM atom = RegisterClassExA(&windowClass);
