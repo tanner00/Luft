@@ -12,13 +12,12 @@
 
 #include <stdio.h>
 
-using MessageHandler = bool(*)(void*, uint32, uint64, uint64);
 bool NoopMessageHandler(void*, uint32, uint64, uint64)
 {
 	return false;
 }
 
-static MessageHandler MessageHandlerOverride = NoopMessageHandler;
+static Platform::MessageHandler MessageHandlerOverride = NoopMessageHandler;
 static bool QuitRequested = false;
 
 namespace Platform
@@ -205,6 +204,11 @@ void DestroyWindow(Window& window)
 void ShowWindow(Window& window)
 {
 	ShowWindow(static_cast<HWND>(window.Handle), SW_SHOWNORMAL);
+}
+
+void InstallMessageHandler(MessageHandler handler)
+{
+	MessageHandlerOverride = handler;
 }
 
 }

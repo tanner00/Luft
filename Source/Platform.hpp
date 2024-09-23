@@ -22,6 +22,8 @@ struct Window
 	int32 DrawHeight;
 };
 
+using MessageHandler = bool(*)(void*, uint32, uint64, uint64);
+
 void MemoryCopy(void* destination, const void* source, usize size);
 void MemoryMove(void* destination, const void* source, usize size);
 bool StringCompare(const char* a, usize aLength, const char* b, usize bLength);
@@ -43,5 +45,7 @@ void ProcessEvents();
 Window MakeWindow(const char* name, int32 drawWidth, int32 drawHeight);
 void DestroyWindow(Window& window);
 void ShowWindow(Window& window);
+
+void InstallMessageHandler(MessageHandler handler);
 
 }
