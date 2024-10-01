@@ -1,12 +1,12 @@
 include "Common.lua"
 
-project "Erde"
+project "Luft"
 	kind "StaticLib"
 
 	SetConfigurationSettings()
 	UseWindowsSettings()
 
 	includedirs { "Source" }
-	files { "Source/**.cpp", "Source/**.hpp", "Erde.natvis" }
+	files { "Source/**.cpp", "Source/**.hpp", "Luft.natvis" }
 
 	filter {}

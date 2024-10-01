@@ -151,7 +151,7 @@ public:
 		{
 			Grow();
 		}
-		new (&Elements[Length], ErdeNewMarker {}) T(Forward<Args>(args)...);
+		new (&Elements[Length], LuftNewMarker {}) T(Forward<Args>(args)...);
 		++Length;
 	}
 
