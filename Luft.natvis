@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
 
-<Type Name="TrivialArray&lt;*&gt;">
+<Type Name="Array&lt;*&gt;">
 	<DisplayString>Length = {Length}, Capacity = {Capacity}</DisplayString>
 	<Expand HideRawView="1">
 		<ArrayItems>
@@ -9,6 +9,10 @@
 			<ValuePointer>Elements</ValuePointer>
 		</ArrayItems>
 	</Expand>
+</Type>
+
+<Type Name="HashTable&lt;*,*&gt;">
+	<DisplayString>Value Count = {ValueCount}, Bucket Count = {Buckets.Length}</DisplayString>
 </Type>
 
 <Type Name="StringView">
