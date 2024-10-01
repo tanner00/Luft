@@ -97,7 +97,7 @@ uint8* ReadEntireFile(const char* filePathNullTerminated, usize* outSize)
 	CHECK(fileSize.HighPart == 0);
 	*outSize = fileSize.LowPart;
 
-	uint8* fileData = static_cast<uint8*>(GlobalAllocate(fileSize.LowPart));
+	uint8* fileData = static_cast<uint8*>(GlobalAllocator::Get().Allocate(fileSize.LowPart));
 	CHECK(fileData);
 
 	DWORD readSize = 0;
@@ -161,7 +161,7 @@ static LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPA
 	return DefWindowProcA(window, message, wParam, lParam);
 }
 
-Window* MakeWindow(const char* name, int32 drawWidth, int32 drawHeight)
+Window* MakeWindow(const char* name, uint32 drawWidth, uint32 drawHeight)
 {
 	BOOL result = SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 	CHECK(result);
@@ -169,7 +169,7 @@ Window* MakeWindow(const char* name, int32 drawWidth, int32 drawHeight)
 	const HMODULE instance = GetModuleHandleA(nullptr);
 
 	const usize windowClassNameLength = strlen(name) + sizeof(" Window Class") + sizeof('\0');
-	char* windowClassName = static_cast<char*>(GlobalAllocate(windowClassNameLength));
+	char* windowClassName = static_cast<char*>(GlobalAllocator::Get().Allocate(windowClassNameLength));
 	const int printResult = sprintf_s(windowClassName, windowClassNameLength, "%s Window Class", name);
 	CHECK(SUCCEEDED(printResult));
 
@@ -190,7 +190,7 @@ Window* MakeWindow(const char* name, int32 drawWidth, int32 drawHeight)
 	constexpr DWORD exStyle = WS_EX_APPWINDOW;
 	constexpr DWORD style = WS_OVERLAPPEDWINDOW;
 
-	RECT windowRect = { 0, 0, drawWidth, drawHeight };
+	RECT windowRect = { 0, 0, static_cast<int32>(drawWidth), static_cast<int32>(drawHeight) };
 	AdjustWindowRectExForDpi(&windowRect, style, FALSE, exStyle, GetDpiForSystem());
 
 	const HWND window = CreateWindowExA(exStyle, windowClass.lpszClassName, name, style,
@@ -198,7 +198,7 @@ Window* MakeWindow(const char* name, int32 drawWidth, int32 drawHeight)
 										nullptr, nullptr, instance, nullptr);
 	CHECK(window);
 
-	Window* userWindow = GlobalCreate<Window>(window, windowClassName, drawWidth, drawHeight);
+	Window* userWindow = GlobalAllocator::Get().Create<Window>(window, windowClassName, drawWidth, drawHeight);
 	CHECK(SUCCEEDED(SetWindowLongPtrA(window, 0, reinterpret_cast<int64>(userWindow))));
 
 	const HMONITOR monitor = MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST);
@@ -209,8 +209,8 @@ Window* MakeWindow(const char* name, int32 drawWidth, int32 drawHeight)
 	};
 	result = GetMonitorInfoA(monitor, &monitorInfo);
 	CHECK(result);
-	const int32 windowPositionX = (monitorInfo.rcWork.left + monitorInfo.rcWork.right) / 2 - drawWidth / 2;
-	const int32 windowPositionY = (monitorInfo.rcWork.top + monitorInfo.rcWork.bottom) / 2 - drawHeight / 2;
+	const int32 windowPositionX = (monitorInfo.rcWork.left + monitorInfo.rcWork.right) / 2 - static_cast<int32>(drawWidth) / 2;
+	const int32 windowPositionY = (monitorInfo.rcWork.top + monitorInfo.rcWork.bottom) / 2 - static_cast<int32>(drawHeight) / 2;
 	SetWindowPos(window, nullptr, windowPositionX, windowPositionY, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
 
 	return userWindow;
@@ -220,8 +220,8 @@ void DestroyWindow(Window* window)
 {
 	DestroyWindow(static_cast<HWND>(window->Handle));
 	UnregisterClassA(static_cast<char*>(window->OsExtra), GetModuleHandleA(nullptr));
-	GlobalDeallocate(window->OsExtra);
-	GlobalDeallocate(window);
+	GlobalAllocator::Get().Deallocate(window->OsExtra, strlen(static_cast<char*>(window->OsExtra)) + 1);
+	GlobalAllocator::Get().Destroy(window);
 }
 
 void ShowWindow(Window* window)

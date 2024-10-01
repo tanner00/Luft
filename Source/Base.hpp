@@ -12,7 +12,7 @@ using uint64 = unsigned long long;
 
 using usize = unsigned long long;
 
-#define ARRAY_COUNT(a) (sizeof((a)) / sizeof(*(a)))
+#define ARRAY_COUNT(a) (sizeof((a)) / sizeof((a)[0]))
 
 #define INDEX_NONE (~static_cast<usize>(0))
 

@@ -39,6 +39,13 @@ constexpr RemoveReferenceType<T>&& Move(T&& toMove) noexcept
 }
 
 template<typename T>
+constexpr RemoveReferenceType<T>&& MoveIfPossible(T&& toMove) noexcept
+{
+	using NoReference = RemoveReferenceType<T>;
+	return static_cast<NoReference&&>(toMove);
+}
+
+template<typename T>
 T&& Forward(RemoveReferenceType<T>& toForward) noexcept
 {
 	return static_cast<T&&>(toForward);

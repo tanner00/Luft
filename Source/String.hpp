@@ -1,16 +1,31 @@
 ﻿#pragma once
 
 #include "Allocator.hpp"
+#include "Error.hpp"
 #include "Base.hpp"
 #include "Platform.hpp"
 
 class StringView
 {
 public:
-	const uint8& operator[](usize index) const
+	uint8 operator[](usize index) const
 	{
 		CHECK(index < Length);
 		return Buffer[index];
+	}
+
+	bool operator==(const StringView& b) const
+	{
+		if (Length != b.Length)
+		{
+			return false;
+		}
+		return Platform::StringCompare(reinterpret_cast<const char*>(Buffer), Length, reinterpret_cast<const char*>(b.Buffer), b.Length);
+	}
+
+	bool operator!=(const StringView& b) const
+	{
+		return !(*this == b);
 	}
 
 	const uint8* Buffer;
@@ -25,36 +40,46 @@ inline StringView operator ""_view(const char* literal, usize length) noexcept
 class String
 {
 public:
-	String()
+	explicit String(Allocator* allocator = &GlobalAllocator::Get())
 		: Buffer(nullptr)
 		, Length(0)
 		, Capacity(0)
+		, Allocator(allocator)
 	{
 	}
 
-	String(StringView view)
+	explicit String(StringView view, Allocator* allocator = &GlobalAllocator::Get())
 		: Length(view.Length)
 		, Capacity(view.Length)
+		, Allocator(allocator)
 	{
-		Buffer = static_cast<uint8*>(GlobalAllocate(Capacity));
+		Buffer = static_cast<uint8*>(Allocator->Allocate(Capacity));
 		Platform::MemoryCopy(Buffer, view.Buffer, Capacity);
 	}
 
-	String(const uint8* data, usize length)
-		: String(StringView { data, length })
+	String(const uint8* data, usize length, Allocator* allocator = &GlobalAllocator::Get())
+		: String(StringView { data, length }, allocator)
 	{
 	}
 
-	explicit String(usize capacity)
+	explicit String(usize capacity, Allocator* allocator = &GlobalAllocator::Get())
+		: Length(0)
+		, Capacity(capacity)
+		, Allocator(allocator)
 	{
-		Length = 0;
-		Capacity = capacity;
-		Buffer = static_cast<uint8*>(GlobalAllocate(Capacity));
+		Buffer = static_cast<uint8*>(Allocator->Allocate(Capacity));
 	}
 
 	~String()
 	{
-		GlobalDeallocate(Buffer);
+		if (Allocator)
+		{
+			Allocator->Deallocate(Buffer, Capacity);
+		}
+		else
+		{
+			CHECK(Buffer == nullptr);
+		}
 
 		Buffer = nullptr;
 		Length = 0;
@@ -65,8 +90,9 @@ public:
 	{
 		Length = copy.Length;
 		Capacity = copy.Capacity;
+		Allocator = copy.Allocator;
 
-		uint8* newBuffer = static_cast<uint8*>(GlobalAllocate(Capacity));
+		uint8* newBuffer = static_cast<uint8*>(Allocator->Allocate(Capacity));
 		Platform::MemoryCopy(newBuffer, copy.Buffer, Length);
 		Buffer = newBuffer;
 	}
@@ -77,8 +103,9 @@ public:
 
 		this->~String();
 
-		uint8* newBuffer = static_cast<uint8*>(GlobalAllocate(copy.Capacity));
-		Platform::MemoryCopy(newBuffer, copy.Buffer, copy.Capacity);
+		Allocator = copy.Allocator;
+		uint8* newBuffer = static_cast<uint8*>(Allocator->Allocate(copy.Capacity));
+		Platform::MemoryCopy(newBuffer, copy.Buffer, copy.Length);
 		Buffer = newBuffer;
 
 		Length = copy.Length;
@@ -92,10 +119,12 @@ public:
 		Buffer = move.Buffer;
 		Length = move.Length;
 		Capacity = move.Capacity;
+		Allocator = move.Allocator;
 
 		move.Buffer = nullptr;
 		move.Length = 0;
 		move.Capacity = 0;
+		move.Allocator = nullptr;
 	}
 
 	String& operator=(String&& move) noexcept
@@ -105,10 +134,12 @@ public:
 		Buffer = move.Buffer;
 		Length = move.Length;
 		Capacity = move.Capacity;
+		Allocator = move.Allocator;
 
 		move.Buffer = nullptr;
 		move.Length = 0;
 		move.Capacity = 0;
+		move.Allocator = nullptr;
 
 		return *this;
 	}
@@ -143,21 +174,20 @@ public:
 
 	void Append(uint8 c)
 	{
-		const usize newLength = Length + 1;
-		if (newLength >= Capacity)
+		if (Length == Capacity)
 		{
-			Grow(newLength);
+			Grow(Capacity ? (Capacity * 2) : 32);
 		}
 		Buffer[Length] = c;
-		Length = newLength;
+		++Length;
 	}
 
 	void Append(StringView view)
 	{
 		const usize newLength = Length + view.Length;
-		if (newLength >= Capacity)
+		if (newLength > Capacity)
 		{
-			Grow(newLength);
+			Grow((Capacity + view.Length) * 2);
 		}
 		Platform::MemoryCopy(Buffer + Length, view.Buffer, view.Length);
 		Length = newLength;
@@ -167,7 +197,7 @@ public:
 	{
 		CHECK(IsEmpty());
 		Capacity = capacity;
-		Buffer = static_cast<uint8*>(GlobalAllocate(Capacity));
+		Buffer = static_cast<uint8*>(Allocator->Allocate(Capacity));
 	}
 
 	void Clear()
@@ -175,7 +205,7 @@ public:
 		Length = 0;
 	}
 
-	StringView AsView() const
+	operator StringView() const
 	{
 		return StringView { Buffer, Length };
 	}
@@ -209,14 +239,11 @@ public:
 	}
 
 private:
-	void Grow(usize atLeast)
+	void Grow(usize newCapacity)
 	{
-		const usize growth = Capacity ? (Capacity * 2) : 32;
-		const usize newCapacity = (growth >= atLeast) ? growth : atLeast;
-
-		uint8* resized = static_cast<uint8*>(GlobalAllocate(newCapacity));
+		uint8* resized = static_cast<uint8*>(Allocator->Allocate(newCapacity));
 		Platform::MemoryCopy(resized, Buffer, Length);
-		GlobalDeallocate(Buffer);
+		Allocator->Deallocate(Buffer, Capacity);
 
 		Buffer = resized;
 		Capacity = newCapacity;
@@ -225,4 +252,5 @@ private:
 	uint8* Buffer;
 	usize Length;
 	usize Capacity;
+	Allocator* Allocator;
 };

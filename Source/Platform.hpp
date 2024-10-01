@@ -18,8 +18,8 @@ struct Window
 	void* Handle;
 	void* OsExtra;
 
-	int32 DrawWidth;
-	int32 DrawHeight;
+	uint32 DrawWidth;
+	uint32 DrawHeight;
 };
 
 using MessageHandler = bool(*)(void*, uint32, uint64, uint64);
@@ -43,7 +43,7 @@ void FatalError(const char* errorMessageNullTerminated);
 bool IsQuitRequested();
 void ProcessEvents();
 
-Window* MakeWindow(const char* name, int32 drawWidth, int32 drawHeight);
+Window* MakeWindow(const char* name, uint32 drawWidth, uint32 drawHeight);
 void DestroyWindow(Window* window);
 void ShowWindow(Window* window);
 

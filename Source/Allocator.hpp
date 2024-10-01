@@ -1,21 +1,12 @@
 ﻿#pragma once
 
+#include "Base.hpp"
 #include "Meta.hpp"
-#include "Platform.hpp"
+#include "NoCopy.hpp"
 
 struct LuftNewMarker
 {
 };
-
-inline void* GlobalAllocate(usize size)
-{
-	return Platform::Allocate(size);
-}
-
-inline void GlobalDeallocate(void* ptr)
-{
-	Platform::Deallocate(ptr);
-}
 
 inline void* operator new(usize size, void* at, LuftNewMarker) noexcept
 {
@@ -23,20 +14,45 @@ inline void* operator new(usize size, void* at, LuftNewMarker) noexcept
 	return at;
 }
 
-template<typename T, typename... Args>
-T* GlobalCreate(Args&&... args)
+class Allocator : public NoCopy
 {
-	T* object = static_cast<T*>(GlobalAllocate(sizeof(T)));
-	object = new (object, LuftNewMarker {}) T(Forward<Args>(args)...);
-	return object;
-}
+public:
+	virtual ~Allocator() = default;
 
-template<typename T>
-void GlobalDestroy(T* object)
-{
-	if (object)
+	virtual void* Allocate(usize size) = 0;
+	virtual void Deallocate(void* ptr, usize size) = 0;
+
+	template<typename T, typename... Args>
+	T* Create(Args&&... args)
 	{
-		object->~T();
+		T* object = static_cast<T*>(Allocate(sizeof(T)));
+		object = new (object, LuftNewMarker {}) T { Forward<Args>(args)... };
+		return object;
 	}
-	GlobalDeallocate(object);
-}
+
+	template<typename T>
+	void Destroy(T* object)
+	{
+		if (object)
+		{
+			object->~T();
+		}
+		Deallocate(object, sizeof(T));
+	}
+};
+
+class GlobalAllocator final : public Allocator
+{
+public:
+	static GlobalAllocator& Get()
+	{
+		static GlobalAllocator instance;
+		return instance;
+	}
+
+	void* Allocate(usize size) override;
+	void Deallocate(void* ptr, usize size) override;
+
+private:
+	GlobalAllocator() = default;
+};
