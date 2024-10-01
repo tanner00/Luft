@@ -14,7 +14,7 @@ public:
 		return Buffer[index];
 	}
 
-	bool operator==(const StringView& b) const
+	bool operator==(StringView b) const
 	{
 		if (Length != b.Length)
 		{
@@ -23,7 +23,7 @@ public:
 		return Platform::StringCompare(reinterpret_cast<const char*>(Buffer), Length, reinterpret_cast<const char*>(b.Buffer), b.Length);
 	}
 
-	bool operator!=(const StringView& b) const
+	bool operator!=(StringView b) const
 	{
 		return !(*this == b);
 	}
@@ -224,7 +224,7 @@ public:
 		return !(*this == b);
 	}
 
-	bool operator==(const StringView& b) const
+	bool operator==(StringView b) const
 	{
 		if (Length != b.Length)
 		{
@@ -233,7 +233,7 @@ public:
 		return Platform::StringCompare(reinterpret_cast<const char*>(Buffer), Length, reinterpret_cast<const char*>(b.Buffer), b.Length);
 	}
 
-	bool operator!=(const StringView& b) const
+	bool operator!=(StringView b) const
 	{
 		return !(*this == b);
 	}

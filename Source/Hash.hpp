@@ -65,7 +65,7 @@ struct Hash<String>
 template<>
 struct Hash<StringView>
 {
-	uint64 operator()(const StringView& key) const
+	uint64 operator()(StringView key) const
 	{
 		return HashFnv1a(key.Buffer, key.Length);
 	}
