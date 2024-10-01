@@ -102,9 +102,9 @@ public:
 		, Allocator(copy.Allocator)
 	{
 		new (&Buckets, LuftNewMarker {}) Array<Array<Pair>> (copy.Buckets.GetLength(), Allocator);
-		for (Array<Pair>& bucket : copy.Buckets)
+		for (usize i = 0; i < copy.Buckets.GetLength(); ++i)
 		{
-			bucket = copy.Buckets;
+			Buckets.Add(copy.Buckets[i]);
 		}
 	}
 
@@ -118,9 +118,9 @@ public:
 		Allocator = copy.Allocator;
 
 		new (&Buckets, LuftNewMarker {}) Array<Array<Pair>> (copy.Buckets.GetLength(), Allocator);
-		for (Array<Pair>& bucket : copy.Buckets)
+		for (usize i = 0; i < copy.Buckets.GetLength(); ++i)
 		{
-			bucket = copy.Buckets;
+			Buckets.Add(copy.Buckets[i]);
 		}
 
 		return *this;
