@@ -75,7 +75,7 @@ public:
 		{
 			for (usize i = 0; i < Length; ++i)
 			{
-				newElements[i] = copy.Elements[i];
+				new (&newElements[i], LuftNewMarker {}) T { copy.Elements[i] };
 			}
 		}
 		Elements = newElements;
@@ -100,7 +100,7 @@ public:
 		{
 			for (usize i = 0; i < Length; ++i)
 			{
-				newElements[i] = copy.Elements[i];
+				new (&newElements[i], LuftNewMarker {}) T { copy.Elements[i] };
 			}
 		}
 		Elements = newElements;
