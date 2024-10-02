@@ -58,6 +58,25 @@ private:
 	usize IntraBucketIndex;
 };
 
+template<typename K, typename InputK>
+concept IsValidHashTableKey = IsSame<RemoveCvType<InputK>, K>::Value || (IsSame<K, String>::Value && IsSame<RemoveCvType<InputK>, StringView>::Value);
+
+template<typename Pair, typename K, typename InputK>
+usize FindPairIndex(const Array<Pair>& bucket, const InputK& key) requires IsValidHashTableKey<K, InputK>
+{
+	usize index = INDEX_NONE;
+	for (usize i = 0; i < bucket.GetLength(); ++i)
+	{
+		const Pair& currentPair = bucket[i];
+		if (key == currentPair.Key)
+		{
+			index = i;
+			break;
+		}
+	}
+	return index;
+}
+
 template<typename T>
 concept IsEqualable = requires(T a, T b)
 {
@@ -74,12 +93,14 @@ public:
 		V Value;
 	};
 
+	using BucketArray = Array<Array<Pair>>;
+
 	explicit HashTable(usize bucketCount, Allocator* allocator = &GlobalAllocator::Get())
 		: ValueCount(0)
 		, Allocator(allocator)
 	{
 		CHECK(bucketCount > 0);
-		new (&Buckets, LuftNewMarker {}) Array<Array<Pair>> (bucketCount, Allocator);
+		new (&Buckets, LuftNewMarker {}) BucketArray (bucketCount, Allocator);
 		for (usize i = 0; i < bucketCount; ++i)
 		{
 			Buckets.Emplace(Allocator);
@@ -101,7 +122,7 @@ public:
 		: ValueCount(copy.ValueCount)
 		, Allocator(copy.Allocator)
 	{
-		new (&Buckets, LuftNewMarker {}) Array<Array<Pair>> (copy.Buckets.GetLength(), Allocator);
+		new (&Buckets, LuftNewMarker {}) BucketArray (copy.Buckets.GetLength(), Allocator);
 		for (usize i = 0; i < copy.Buckets.GetLength(); ++i)
 		{
 			Buckets.Add(copy.Buckets[i]);
@@ -117,7 +138,7 @@ public:
 		ValueCount = copy.ValueCount;
 		Allocator = copy.Allocator;
 
-		new (&Buckets, LuftNewMarker {}) Array<Array<Pair>> (copy.Buckets.GetLength(), Allocator);
+		new (&Buckets, LuftNewMarker {}) BucketArray (copy.Buckets.GetLength(), Allocator);
 		for (usize i = 0; i < copy.Buckets.GetLength(); ++i)
 		{
 			Buckets.Add(copy.Buckets[i]);
@@ -149,24 +170,16 @@ public:
 		return *this;
 	}
 
-	V& operator[](const K& key)
+	template<typename InputK>
+	V& operator[](const InputK& key) requires IsValidHashTableKey<K, InputK>
 	{
-		const uint64 bucketIndex = Hash<K>{}(key) % Buckets.GetLength();
-		Array<Pair>& bucket = Buckets[bucketIndex];
-
-		const usize index = FindPairIndex(bucket, key);
-		CHECK(index != INDEX_NONE);
-		return bucket[index].Value;
+		return Get(key);
 	}
 
-	const V& operator[](const K& key) const
+	template<typename InputK>
+	const V& operator[](const InputK& key) const requires IsValidHashTableKey<K, InputK>
 	{
-		const uint64 bucketIndex = Hash<K>{}(key) % Buckets.GetLength();
-		const Array<Pair>& bucket = Buckets[bucketIndex];
-
-		const usize index = FindPairIndex(bucket, key);
-		CHECK(index != INDEX_NONE);
-		return bucket[index].Value;
+		return Get(key);
 	}
 
 	usize GetCount() const
@@ -179,10 +192,75 @@ public:
 		return ValueCount == 0;
 	}
 
-	bool Contains(const K& key) const
+	template<typename InputK>
+	bool Contains(const InputK& key) const requires IsValidHashTableKey<K, InputK>
+	{
+		const uint64 bucketIndex = Hash<InputK>{}(key) % Buckets.GetLength();
+		return FindPairIndex<Pair, K, InputK>(Buckets[bucketIndex], key) != INDEX_NONE;
+	}
+
+	template<typename InputK>
+	V& Get(const InputK& key) requires IsValidHashTableKey<K, InputK>
+	{
+		const uint64 bucketIndex = Hash<InputK>{}(key) % Buckets.GetLength();
+		Array<Pair>& bucket = Buckets[bucketIndex];
+
+		const usize index = FindPairIndex<Pair, K, InputK>(bucket, key);
+		CHECK(index != INDEX_NONE);
+		return bucket[index].Value;
+	}
+
+	template<typename InputK>
+	const V& Get(const InputK& key) const requires IsValidHashTableKey<K, InputK>
+	{
+		const uint64 bucketIndex = Hash<InputK>{}(key) % Buckets.GetLength();
+		const Array<Pair>& bucket = Buckets[bucketIndex];
+
+		const usize index = FindPairIndex<Pair, K, InputK>(bucket, key);
+		CHECK(index != INDEX_NONE);
+		return bucket[index].Value;
+	}
+
+	template<typename InputK>
+	V& GetOrAdd(const InputK& key) requires IsValidHashTableKey<K, InputK>
+	{
+		const uint64 bucketIndex = Hash<InputK>{}(key) % Buckets.GetLength();
+		Array<Pair>& bucket = Buckets[bucketIndex];
+
+		const usize index = FindPairIndex<Pair, K, InputK>(bucket, key);
+		if (index != INDEX_NONE)
+		{
+			return bucket[index].Value;
+		}
+
+		if constexpr (IsSame<RemoveCvType<InputK>, StringView>::Value)
+		{
+			bucket.Add(Pair { String { key }, {} });
+		}
+		else
+		{
+			bucket.Add(Pair { key, {} });
+		}
+		++ValueCount;
+
+		return bucket[bucket.GetLength() - 1].Value;
+	}
+
+	V& GetOrAdd(K&& key)
 	{
 		const uint64 bucketIndex = Hash<K>{}(key) % Buckets.GetLength();
-		return FindPairIndex(Buckets[bucketIndex], key) != INDEX_NONE;
+		Array<Pair>& bucket = Buckets[bucketIndex];
+
+		const usize index = FindPairIndex<Pair, K, K>(bucket, key);
+		if (index != INDEX_NONE)
+		{
+			return bucket[index].Value;
+		}
+
+		bucket.Add(Pair { Move(key), {} });
+		++ValueCount;
+
+		return bucket[bucket.GetLength() - 1].Value;
 	}
 
 	bool Add(const K& key, const V& value)
@@ -190,7 +268,7 @@ public:
 		const uint64 bucketIndex = Hash<K>{}(key) % Buckets.GetLength();
 		Array<Pair>& bucket = Buckets[bucketIndex];
 
-		const usize alreadyExistingIndex = FindPairIndex(Buckets[bucketIndex], key);
+		const usize alreadyExistingIndex = FindPairIndex<Pair, K, K>(Buckets[bucketIndex], key);
 		if (alreadyExistingIndex != INDEX_NONE)
 		{
 			bucket[alreadyExistingIndex] = Pair { key, value };
@@ -207,7 +285,7 @@ public:
 		const uint64 bucketIndex = Hash<K>{}(key) % Buckets.GetLength();
 		Array<Pair>& bucket = Buckets[bucketIndex];
 
-		const usize alreadyExistingIndex = FindPairIndex(Buckets[bucketIndex], key);
+		const usize alreadyExistingIndex = FindPairIndex<Pair, K, K>(Buckets[bucketIndex], key);
 		if (alreadyExistingIndex != INDEX_NONE)
 		{
 			bucket[alreadyExistingIndex] = Pair { Move(key), Move(value) };
@@ -219,18 +297,17 @@ public:
 		return true;
 	}
 
-	void Remove(const K& key)
+	template<typename InputK>
+	void Remove(const InputK& key) requires IsValidHashTableKey<K, InputK>
 	{
-		const uint64 bucketIndex = Hash<K>{}(key) % Buckets.GetLength();
+		const uint64 bucketIndex = Hash<InputK>{}(key) % Buckets.GetLength();
 
-		const usize index = FindPairIndex(Buckets[bucketIndex], key);
+		const usize index = FindPairIndex<Pair, K, InputK>(Buckets[bucketIndex], key);
 		CHECK(index != INDEX_NONE);
 
 		Buckets[bucketIndex].Remove(index);
 		--ValueCount;
 	}
-
-	using BucketArray = Array<Array<Pair>>;
 
 	HashTableIterator<BucketArray, Pair> begin()
 	{
@@ -253,21 +330,6 @@ public:
 	}
 
 private:
-	usize FindPairIndex(const Array<Pair>& bucket, const K& key) const
-	{
-		usize index = INDEX_NONE;
-		for (usize i = 0; i < bucket.GetLength(); ++i)
-		{
-			const Pair& currentPair = bucket[i];
-			if (key == currentPair.Key)
-			{
-				index = i;
-				break;
-			}
-		}
-		return index;
-	}
-
 	usize FindFirstUsedBucket() const
 	{
 		usize index = INDEX_NONE;
