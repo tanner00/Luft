@@ -59,3 +59,14 @@ T&& Forward(RemoveReferenceType<T>&& toForward) noexcept
 
 template<typename T>
 struct IsTriviallyCopyable : Constant<bool, __is_trivially_copyable(T)> {};
+
+template<typename T>
+struct RemoveCv { using Type = T; };
+template<typename T>
+struct RemoveCv<const T> { using Type = T; };
+template<typename T>
+struct RemoveCv<volatile T> { using Type = T; };
+template<typename T>
+struct RemoveCv<const volatile T> { using Type = T; };
+template<typename T>
+using RemoveCvType = typename RemoveCv<T>::Type;
