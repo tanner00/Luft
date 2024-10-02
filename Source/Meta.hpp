@@ -26,7 +26,7 @@ struct RemoveReference<T&> { using Type = T; };
 template<typename T>
 struct RemoveReference<T&&> { using Type = T; };
 template<typename T>
-using RemoveReferenceType = typename RemoveReference<T&&>::Type;
+using RemoveReferenceType = typename RemoveReference<T>::Type;
 
 template<typename T>
 constexpr RemoveReferenceType<T>&& Move(T&& toMove) noexcept
