@@ -87,11 +87,10 @@ public:
 	}
 
 	String(const String& copy)
+		: Length(copy.Length)
+		, Capacity(copy.Capacity)
+		, Allocator(copy.Allocator)
 	{
-		Length = copy.Length;
-		Capacity = copy.Capacity;
-		Allocator = copy.Allocator;
-
 		uint8* newBuffer = static_cast<uint8*>(Allocator->Allocate(Capacity));
 		Platform::MemoryCopy(newBuffer, copy.Buffer, Length);
 		Buffer = newBuffer;
@@ -115,12 +114,11 @@ public:
 	}
 
 	String(String&& move) noexcept
+		: Buffer(move.Buffer)
+		, Length(move.Length)
+		, Capacity(move.Capacity)
+		, Allocator(move.Allocator)
 	{
-		Buffer = move.Buffer;
-		Length = move.Length;
-		Capacity = move.Capacity;
-		Allocator = move.Allocator;
-
 		move.Buffer = nullptr;
 		move.Length = 0;
 		move.Capacity = 0;
