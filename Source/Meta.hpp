@@ -61,6 +61,9 @@ template<typename T>
 struct IsTriviallyCopyable : Constant<bool, __is_trivially_copyable(T)> {};
 
 template<typename T>
+struct IsTriviallyDestructible : Constant<bool, __is_trivially_destructible(T)> {};
+
+template<typename T>
 struct RemoveCv { using Type = T; };
 template<typename T>
 struct RemoveCv<const T> { using Type = T; };

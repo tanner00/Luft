@@ -48,7 +48,17 @@ public:
 	{
 		if (Allocator)
 		{
-			Allocator->Deallocate(Elements, sizeof(T));
+			if constexpr (IsTriviallyDestructible<T>::Value)
+			{
+				Allocator->Deallocate(Elements, sizeof(T));
+			}
+			else
+			{
+				for (usize i = 0; i < Length; ++i)
+				{
+					Elements[i].~T();
+				}
+			}
 		}
 		else
 		{
