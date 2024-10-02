@@ -53,12 +53,17 @@ HASH_PRIMITIVE(uint64);
 HASH_PRIMITIVE(float);
 HASH_PRIMITIVE(double);
 
+inline uint64 StringHash(const void* key, usize length)
+{
+	return HashFnv1a(key, length);
+}
+
 template<>
 struct Hash<String>
 {
 	uint64 operator()(const String& key) const
 	{
-		return HashFnv1a(key.GetData(), key.GetLength());
+		return StringHash(key.GetData(), key.GetLength());
 	}
 };
 
@@ -67,7 +72,7 @@ struct Hash<StringView>
 {
 	uint64 operator()(StringView key) const
 	{
-		return HashFnv1a(key.Buffer, key.Length);
+		return StringHash(key.Buffer, key.Length);
 	}
 };
 
