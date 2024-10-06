@@ -18,3 +18,7 @@ using usize = unsigned long long;
 
 #define TOKEN_PASTE_(a, b) a##b
 #define TOKEN_PASTE(a, b) TOKEN_PASTE_(a, b)
+
+#define KB(x) ((x) * 1024ULL)
+#define MB(x) (KB(x) * 1024ULL)
+#define GB(x) (MB(x) * 1024ULL)
