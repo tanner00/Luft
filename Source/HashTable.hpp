@@ -235,11 +235,11 @@ public:
 
 		if constexpr (IsSame<RemoveCvType<InputK>, StringView>::Value)
 		{
-			bucket.Add(Pair { String { key }, {} });
+			bucket.Add({ String { key }, {} });
 		}
 		else
 		{
-			bucket.Add(Pair { key, {} });
+			bucket.Add({ key, {} });
 		}
 		++ValueCount;
 
@@ -257,7 +257,7 @@ public:
 			return bucket[index].Value;
 		}
 
-		bucket.Add(Pair { Move(key), {} });
+		bucket.Add({ Move(key), {} });
 		++ValueCount;
 
 		return bucket[bucket.GetLength() - 1].Value;
@@ -271,11 +271,11 @@ public:
 		const usize alreadyExistingIndex = FindPairIndex<Pair, K, K>(Buckets[bucketIndex], key);
 		if (alreadyExistingIndex != INDEX_NONE)
 		{
-			bucket[alreadyExistingIndex] = Pair { key, value };
+			bucket[alreadyExistingIndex] = { key, value };
 			return false;
 		}
 
-		bucket.Add(Pair { key, value });
+		bucket.Add({ key, value });
 		++ValueCount;
 		return true;
 	}
@@ -288,7 +288,7 @@ public:
 		const usize alreadyExistingIndex = FindPairIndex<Pair, K, K>(Buckets[bucketIndex], key);
 		if (alreadyExistingIndex != INDEX_NONE)
 		{
-			bucket[alreadyExistingIndex] = Pair { Move(key), Move(value) };
+			bucket[alreadyExistingIndex] = { Move(key), Move(value) };
 			return false;
 		}
 
