@@ -31,6 +31,13 @@ T Clamp(T value, T min, T max)
 	return (value > max) ? max : ((value < min) ? min : value);
 }
 
+inline uint64 NextMultipleOf(uint64 value, uint64 multiple)
+{
+	CHECK(multiple > 0);
+	const uint64 remainder = value % multiple;
+	return remainder ? (value + multiple - remainder) : value;
+}
+
 class Vector
 {
 public:
