@@ -309,6 +309,15 @@ public:
 		--ValueCount;
 	}
 
+	void Clear()
+	{
+		ValueCount = 0;
+		for (usize i = 0; i < Buckets.GetLength(); ++i)
+		{
+			Buckets.Clear();
+		}
+	}
+
 	HashTableIterator<BucketArray, Pair> begin()
 	{
 		return HashTableIterator<BucketArray, Pair>(Buckets, ValueCount, FindFirstUsedBucket());
