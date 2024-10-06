@@ -28,6 +28,11 @@ static bool QuitRequested = false;
 namespace Platform
 {
 
+void MemorySet(void* destination, uint8 value, usize size)
+{
+	memset(destination, value, size);
+}
+
 void MemoryCopy(void* destination, const void* source, usize size)
 {
 	memcpy(destination, source, size);

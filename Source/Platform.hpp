@@ -25,6 +25,7 @@ struct Window
 using MessageHandler = bool(*)(void*, uint32, uint64, uint64);
 using ResizeHandler = void(*)(Window* window);
 
+void MemorySet(void* destination, uint8 value, usize size);
 void MemoryCopy(void* destination, const void* source, usize size);
 void MemoryMove(void* destination, const void* source, usize size);
 bool StringCompare(const char* a, usize aLength, const char* b, usize bLength);
