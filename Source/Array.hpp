@@ -273,7 +273,7 @@ private:
 		{
 			for (usize i = 0; i < Length; ++i)
 			{
-				resized[i] = MoveIfPossible(Elements[i]);
+				new (&resized[i], LuftNewMarker {}) T { MoveIfPossible(Elements[i]) };
 			}
 			for (usize i = 0; i < Length; ++i)
 			{
