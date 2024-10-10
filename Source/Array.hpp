@@ -50,7 +50,7 @@ public:
 		{
 			if constexpr (IsTriviallyDestructible<T>::Value)
 			{
-				Allocator->Deallocate(Elements, sizeof(T));
+				Allocator->Deallocate(Elements, Capacity * sizeof(T));
 			}
 			else
 			{
@@ -280,7 +280,7 @@ private:
 				Elements[i].~T();
 			}
 		}
-		Allocator->Deallocate(Elements, sizeof(T));
+		Allocator->Deallocate(Elements, Capacity * sizeof(T));
 
 		Elements = resized;
 		Capacity = newCapacity;
