@@ -160,7 +160,7 @@ public:
 
 	static Matrix Perspective(float fieldOfViewYDegrees, float aspectRatio, float nearZ, float farZ)
 	{
-		const float height = 1.0f / Tangent(0.5f * fieldOfViewYDegrees);
+		const float height = 1.0f / Tangent(0.5f * fieldOfViewYDegrees * DegreesToRadians);
 		const float width = height / aspectRatio;
 		const float range = farZ / (nearZ - farZ);
 		return Matrix
