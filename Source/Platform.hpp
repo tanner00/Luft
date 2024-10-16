@@ -10,6 +10,8 @@
 #error "The platform layer is currently unimplemented for this target!"
 #endif
 
+class Allocator;
+
 enum class Key
 {
 	Zero, One, Two, Three, Four, Five, Six, Seven, Eight, Nine,
@@ -59,11 +61,11 @@ void Deallocate(void* ptr);
 
 usize StringLength(const char* sNullTerminated);
 void StringPrint(const char* formatNullTerminated, char* buffer, usize bufferSize, ...);
+
 void Log(const char* messageNullTerminated);
-
-uint8* ReadEntireFile(const char* filePathNullTerminated, usize* outSize);
-
 void FatalError(const char* errorMessageNullTerminated);
+
+uint8* ReadEntireFile(const char* filePath, usize filePathSize, usize* outSize, Allocator& allocator);
 
 bool IsQuitRequested();
 void ProcessEvents();

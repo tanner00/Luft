@@ -130,9 +130,13 @@ void Log(const char* messageNullTerminated)
 	OutputDebugStringA(messageNullTerminated);
 }
 
-uint8* ReadEntireFile(const char* filePathNullTerminated, usize* outSize)
+uint8* ReadEntireFile(const char* filePath, usize filePathSize, usize* outSize, Allocator& allocator)
 {
 	CHECK(outSize);
+
+	char filePathNullTerminated[MAX_PATH] = {};
+	VERIFY(filePathSize + 1 <= sizeof(filePathNullTerminated), "File path exceeds length limit!");
+	MemoryCopy(filePathNullTerminated, filePath, filePathSize);
 
 	const DWORD fileAttributes = GetFileAttributesA(filePathNullTerminated);
 	const bool fileExists = fileAttributes != INVALID_FILE_ATTRIBUTES && !(fileAttributes & FILE_ATTRIBUTE_DIRECTORY);
@@ -146,7 +150,7 @@ uint8* ReadEntireFile(const char* filePathNullTerminated, usize* outSize)
 	CHECK(fileSize.HighPart == 0);
 	*outSize = fileSize.LowPart;
 
-	uint8* fileData = static_cast<uint8*>(GlobalAllocator::Get().Allocate(fileSize.LowPart));
+	uint8* fileData = static_cast<uint8*>(allocator.Allocate(fileSize.LowPart));
 	CHECK(fileData);
 
 	DWORD readSize = 0;
