@@ -10,6 +10,30 @@
 #error "The platform layer is currently unimplemented for this target!"
 #endif
 
+enum class Key
+{
+	Zero, One, Two, Three, Four, Five, Six, Seven, Eight, Nine,
+	A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
+	Left, Right, Up, Down,
+	Escape, Backspace, Space, Enter,
+	Count,
+};
+
+enum class MouseButton
+{
+	Left,
+	Right,
+	Count,
+};
+
+bool IsKeyPressed(Key key);
+bool IsKeyPressedOnce(Key key);
+
+bool IsMouseButtonPressed(MouseButton button);
+bool IsMouseButtonPressedOnce(MouseButton button);
+int32 GetMouseX();
+int32 GetMouseY();
+
 namespace Platform
 {
 

@@ -3,6 +3,7 @@
 #include "Allocator.hpp"
 #include "Base.hpp"
 #include "Error.hpp"
+#include "HashTable.hpp"
 #include "Platform.hpp"
 
 #undef UNICODE
@@ -24,6 +25,49 @@ static void NoOpResizeHandler(Platform::Window*)
 static Platform::MessageHandler MessageHandlerOverride = NoOpMessageHandler;
 static Platform::ResizeHandler ResizeHandlerOverride = NoOpResizeHandler;
 static bool QuitRequested = false;
+
+static HashTable<uint16, Key> WindowsKeyMap(32);
+static bool KeyPressed[static_cast<usize>(Key::Count)] = {};
+static bool KeyPressedOnce[static_cast<usize>(Key::Count)] = {};
+
+static bool MouseButtonPressed[static_cast<usize>(MouseButton::Count)] = {};
+static bool MouseButtonPressedOnce[static_cast<usize>(MouseButton::Count)] = {};
+static int32 MouseX = 0;
+static int32 MouseY = 0;
+
+bool IsKeyPressed(Key key)
+{
+	CHECK(key != Key::Count);
+	return KeyPressed[static_cast<usize>(key)];
+}
+
+bool IsKeyPressedOnce(Key key)
+{
+	CHECK(key != Key::Count);
+	return KeyPressedOnce[static_cast<usize>(key)];
+}
+
+bool IsMouseButtonPressed(MouseButton button)
+{
+	CHECK(button != MouseButton::Count);
+	return MouseButtonPressed[static_cast<usize>(button)];
+}
+
+bool IsMouseButtonPressedOnce(MouseButton button)
+{
+	CHECK(button != MouseButton::Count);
+	return MouseButtonPressedOnce[static_cast<usize>(button)];
+}
+
+int32 GetMouseX()
+{
+	return MouseX;
+}
+
+int32 GetMouseY()
+{
+	return MouseY;
+}
 
 namespace Platform
 {
@@ -126,6 +170,15 @@ bool IsQuitRequested()
 
 void ProcessEvents()
 {
+	for (bool& justPressed : KeyPressedOnce)
+	{
+		justPressed = false;
+	}
+	for (bool& justPressed : MouseButtonPressedOnce)
+	{
+		justPressed = false;
+	}
+
 	MSG msg;
 	while (PeekMessageA(&msg, nullptr, 0, 0, PM_REMOVE))
 	{
@@ -160,6 +213,70 @@ static LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPA
 		ResizeHandlerOverride(userWindow);
 		return 0;
 	}
+	case WM_KEYDOWN:
+	{
+		const uint16 key = LOWORD(wParam);
+		if (WindowsKeyMap.Contains(key))
+		{
+			const usize keyIndex = static_cast<usize>(WindowsKeyMap[key]);
+
+			if (!KeyPressed[keyIndex])
+			{
+				KeyPressedOnce[keyIndex] = true;
+			}
+			KeyPressed[keyIndex] = true;
+		}
+		break;
+	}
+	case WM_KEYUP:
+	{
+		const uint16 key = LOWORD(wParam);
+		if (WindowsKeyMap.Contains(key))
+		{
+			const usize keyIndex = static_cast<usize>(WindowsKeyMap[key]);
+			KeyPressed[keyIndex] = false;
+			KeyPressedOnce[keyIndex] = false;
+		}
+		break;
+	}
+	case WM_LBUTTONDOWN:
+	{
+		constexpr usize button = static_cast<usize>(MouseButton::Left);
+		if (!MouseButtonPressed[button])
+		{
+			MouseButtonPressedOnce[button] = true;
+		}
+		MouseButtonPressed[button] = true;
+		break;
+	}
+	case WM_LBUTTONUP:
+	{
+		constexpr usize button = static_cast<usize>(MouseButton::Left);
+		MouseButtonPressedOnce[button] = false;
+		MouseButtonPressed[button] = false;
+		break;
+	}
+	case WM_RBUTTONDOWN:
+	{
+		constexpr usize button = static_cast<usize>(MouseButton::Right);
+		if (!MouseButtonPressed[button])
+		{
+			MouseButtonPressedOnce[button] = true;
+		}
+		MouseButtonPressed[button] = true;
+		break;
+	}
+	case WM_RBUTTONUP:
+	{
+		constexpr usize button = static_cast<usize>(MouseButton::Right);
+		MouseButtonPressedOnce[button] = false;
+		MouseButtonPressed[button] = false;
+		break;
+	}
+	case WM_MOUSEMOVE:
+		MouseX = static_cast<int32>(LOWORD(lParam));
+		MouseY = static_cast<int32>(HIWORD(lParam));
+		break;
 	default:
 		break;
 	}
@@ -229,7 +346,7 @@ void DestroyWindow(Window* window)
 	GlobalAllocator::Get().Destroy(window);
 }
 
-void ShowWindow(Window* window)
+void ShowWindow(const Window* window)
 {
 	ShowWindow(static_cast<HWND>(window->Handle), SW_SHOWNORMAL);
 }
@@ -250,6 +367,23 @@ extern void Start();
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
+	for (uint16 c = '0'; c <= '9'; ++c)
+	{
+		WindowsKeyMap.Add(c, static_cast<Key>(c - '0'));
+	}
+	for (uint16 c = 'A'; c <= 'Z'; ++c)
+	{
+		WindowsKeyMap.Add(c, static_cast<Key>(c - 'A' + static_cast<usize>(Key::A)));
+	}
+	WindowsKeyMap.Add(VK_LEFT, Key::Left);
+	WindowsKeyMap.Add(VK_RIGHT, Key::Right);
+	WindowsKeyMap.Add(VK_UP, Key::Up);
+	WindowsKeyMap.Add(VK_DOWN, Key::Down);
+	WindowsKeyMap.Add(VK_ESCAPE, Key::Escape);
+	WindowsKeyMap.Add(VK_BACK, Key::Backspace);
+	WindowsKeyMap.Add(VK_SPACE, Key::Space);
+	WindowsKeyMap.Add(VK_RETURN, Key::Enter);
+
 	Start();
 }
 
