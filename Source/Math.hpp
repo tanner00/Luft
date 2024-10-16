@@ -147,6 +147,17 @@ public:
 		};
 	}
 
+	static Matrix Orthographic(float leftX, float rightX, float bottomY, float topY, float nearZ, float farZ)
+	{
+		return Matrix
+		{
+			2.0f / (rightX - leftX),              0.0f,                                 0.0f,                    0.0f,
+			0.0f,                                 2.0f / (topY - bottomY),              0.0f,                    0.0f,
+			0.0f,                                 0.0f,                                 -1.0f / (farZ - nearZ),  0.0f,
+			-(rightX + leftX) / (rightX - leftX), -(topY + bottomY) / (topY - bottomY), -nearZ / (farZ - nearZ), 1.0f,
+		};
+	}
+
 	static Matrix Perspective(float fieldOfViewYDegrees, float aspectRatio, float nearZ, float farZ)
 	{
 		const float height = 1.0f / Tangent(0.5f * fieldOfViewYDegrees);
@@ -171,7 +182,7 @@ public:
 			right.X,              up.X,              -back.X,            0.0f,
 			right.Y,              up.Y,              -back.Y,            0.0f,
 			right.Z,              up.Z,              -back.Z,            0.0f,
-			-position.Dot(right), -position.Dot(up), position.Dot(back), 1.0,
+			-position.Dot(right), -position.Dot(up), position.Dot(back), 1.0f,
 		};
 	}
 
