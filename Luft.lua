@@ -7,6 +7,6 @@ project "Luft"
 	UseWindowsSettings()
 
 	includedirs { "Source" }
-	files { "Source/**.cpp", "Source/**.hpp", "Luft.natvis" }
+	files { "Source/Luft/**.cpp", "Source/Luft/**.hpp", "Luft.natvis" }
 
 	filter {}
