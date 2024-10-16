@@ -355,6 +355,11 @@ void ShowWindow(const Window* window)
 	ShowWindow(static_cast<HWND>(window->Handle), SW_SHOWNORMAL);
 }
 
+void SetWindowTitle(const Window* window, const char* title)
+{
+	SetWindowTextA(static_cast<HWND>(window->Handle), title);
+}
+
 void InstallMessageHandler(MessageHandler handler)
 {
 	MessageHandlerOverride = handler;

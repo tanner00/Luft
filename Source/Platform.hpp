@@ -72,7 +72,8 @@ void ProcessEvents();
 
 Window* MakeWindow(const char* name, uint32 drawWidth, uint32 drawHeight);
 void DestroyWindow(Window* window);
-void ShowWindow(Window* window);
+void ShowWindow(const Window* window);
+void SetWindowTitle(const Window* window, const char* title);
 
 void InstallMessageHandler(MessageHandler handler);
 void InstallResizeHandler(ResizeHandler handler);
