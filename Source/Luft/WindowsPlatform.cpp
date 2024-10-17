@@ -1,5 +1,8 @@
 #if WINDOWS
 
+#pragma comment(lib, "kernel32")
+#pragma comment(lib, "user32")
+
 #include "Allocator.hpp"
 #include "Base.hpp"
 #include "Error.hpp"
