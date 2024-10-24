@@ -146,7 +146,7 @@ public:
 		};
 	}
 
-	static Matrix Orthographic(float leftX, float rightX, float bottomY, float topY, float nearZ, float farZ)
+	static Matrix Orthographic(float leftX, float rightX, float topY, float bottomY, float nearZ, float farZ)
 	{
 		return Matrix
 		{
