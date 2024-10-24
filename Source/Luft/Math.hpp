@@ -26,9 +26,26 @@ T Max(T a, T b)
 }
 
 template<typename T>
+T Absolute(T x)
+{
+	return (x > 0) ? x : -x;
+}
+
+template<typename T>
 T Clamp(T value, T min, T max)
 {
 	return (value > max) ? max : ((value < min) ? min : value);
+}
+
+inline uint64 Power10(uint64 x)
+{
+	uint64 result = 1;
+	while (x)
+	{
+		result *= 10;
+		--x;
+	}
+	return result;
 }
 
 inline uint64 NextMultipleOf(uint64 value, uint64 multiple)
