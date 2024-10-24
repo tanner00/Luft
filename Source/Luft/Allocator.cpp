@@ -3,11 +3,12 @@
 
 void* GlobalAllocator::Allocate(usize size)
 {
+	Used += size;
 	return Platform::Allocate(size);
 }
 
 void GlobalAllocator::Deallocate(void* ptr, usize size)
 {
-	(void)size;
+	Used -= size;
 	Platform::Deallocate(ptr);
 }

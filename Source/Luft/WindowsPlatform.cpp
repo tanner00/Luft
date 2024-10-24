@@ -297,7 +297,7 @@ Window* MakeWindow(const char* name, uint32 drawWidth, uint32 drawHeight)
 
 	const HMODULE instance = GetModuleHandleA(nullptr);
 
-	const usize windowClassNameLength = strlen(name) + sizeof(" Window Class") + sizeof('\0');
+	const usize windowClassNameLength = strlen(name) + (sizeof(" Window Class") - 1) + (sizeof('\0') - 1) + 1;
 	char* windowClassName = static_cast<char*>(GlobalAllocator::Get().Allocate(windowClassNameLength));
 	const int printResult = sprintf_s(windowClassName, windowClassNameLength, "%s Window Class", name);
 	CHECK(SUCCEEDED(printResult));
@@ -396,7 +396,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	WindowsKeyMap.Add(VK_SPACE, Key::Space);
 	WindowsKeyMap.Add(VK_RETURN, Key::Enter);
 
+	const usize startingUsed = GlobalAllocator::Get().GetUsed();
+
 	Start();
+
+	const usize endingUsed = GlobalAllocator::Get().GetUsed();
+	CHECK(endingUsed - startingUsed == 0);
+
+	return 0;
 }
 
 #endif

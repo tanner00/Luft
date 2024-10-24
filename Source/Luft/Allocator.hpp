@@ -50,9 +50,16 @@ public:
 		return instance;
 	}
 
+	usize GetUsed() const
+	{
+		return Used;
+	}
+
 	void* Allocate(usize size) override;
 	void Deallocate(void* ptr, usize size) override;
 
 private:
 	GlobalAllocator() = default;
+
+	usize Used = 0;
 };
