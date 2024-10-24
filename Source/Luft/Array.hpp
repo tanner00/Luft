@@ -192,6 +192,15 @@ public:
 		++Length;
 	}
 
+	void AddUninitialized(usize count)
+	{
+		if (Length + count > Capacity)
+		{
+			Grow(Length + count);
+		}
+		Length = count;
+	}
+
 	void Reserve(usize capacity)
 	{
 		CHECK(IsEmpty());
