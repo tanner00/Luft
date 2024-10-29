@@ -29,7 +29,7 @@ static Platform::MessageHandler MessageHandlerOverride = NoOpMessageHandler;
 static Platform::ResizeHandler ResizeHandlerOverride = NoOpResizeHandler;
 static bool QuitRequested = false;
 
-static HashTable<uint16, Key> WindowsKeyMap(32);
+static HashTable<uint16, Key> WindowsKeyMap(32, &GlobalAllocator::Get());
 static bool KeyPressed[static_cast<usize>(Key::Count)] = {};
 static bool KeyPressedOnce[static_cast<usize>(Key::Count)] = {};
 
@@ -248,7 +248,7 @@ static LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPA
 	}
 	case WM_LBUTTONDOWN:
 	{
-		constexpr usize button = static_cast<usize>(MouseButton::Left);
+		static constexpr usize button = static_cast<usize>(MouseButton::Left);
 		if (!MouseButtonPressed[button])
 		{
 			MouseButtonPressedOnce[button] = true;
@@ -258,14 +258,14 @@ static LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPA
 	}
 	case WM_LBUTTONUP:
 	{
-		constexpr usize button = static_cast<usize>(MouseButton::Left);
+		static constexpr usize button = static_cast<usize>(MouseButton::Left);
 		MouseButtonPressedOnce[button] = false;
 		MouseButtonPressed[button] = false;
 		break;
 	}
 	case WM_RBUTTONDOWN:
 	{
-		constexpr usize button = static_cast<usize>(MouseButton::Right);
+		static constexpr usize button = static_cast<usize>(MouseButton::Right);
 		if (!MouseButtonPressed[button])
 		{
 			MouseButtonPressedOnce[button] = true;
@@ -275,7 +275,7 @@ static LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPA
 	}
 	case WM_RBUTTONUP:
 	{
-		constexpr usize button = static_cast<usize>(MouseButton::Right);
+		static constexpr usize button = static_cast<usize>(MouseButton::Right);
 		MouseButtonPressedOnce[button] = false;
 		MouseButtonPressed[button] = false;
 		break;
@@ -316,8 +316,8 @@ Window* MakeWindow(const char* name, uint32 drawWidth, uint32 drawHeight)
 	const ATOM atom = RegisterClassExA(&windowClass);
 	CHECK(atom);
 
-	constexpr DWORD exStyle = WS_EX_APPWINDOW;
-	constexpr DWORD style = WS_OVERLAPPEDWINDOW;
+	static constexpr DWORD exStyle = WS_EX_APPWINDOW;
+	static constexpr DWORD style = WS_OVERLAPPEDWINDOW;
 
 	RECT windowRect = { 0, 0, static_cast<int32>(drawWidth), static_cast<int32>(drawHeight) };
 	AdjustWindowRectExForDpi(&windowRect, style, FALSE, exStyle, GetDpiForSystem());
