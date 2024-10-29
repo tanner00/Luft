@@ -72,7 +72,7 @@ struct Hash<StringView>
 {
 	uint64 operator()(StringView key) const
 	{
-		return StringHash(key.Buffer, key.Length);
+		return StringHash(key.GetData(), key.GetLength());
 	}
 };
 

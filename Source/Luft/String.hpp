@@ -5,16 +5,68 @@
 #include "Base.hpp"
 #include "Platform.hpp"
 
-class StringView
+class StringBase
 {
 public:
-	uint8 operator[](usize index) const
+	StringBase(uchar* buffer, usize length)
+		: Buffer(buffer)
+		, Length(length)
+	{
+	}
+
+	uchar* GetData() const
+	{
+		CHECK(Buffer);
+		return Buffer;
+	}
+
+	usize GetLength() const
+	{
+		return Length;
+	}
+
+	bool IsEmpty() const
+	{
+		return Length == 0;
+	}
+
+	usize Find(uchar c) const
+	{
+		for (usize i = 0; i < Length; ++i)
+		{
+			if (Buffer[i] == c)
+			{
+				return i;
+			}
+		}
+		return INDEX_NONE;
+	}
+
+	usize ReverseFind(uchar c) const
+	{
+		for (usize i = Length - 1; i != INDEX_NONE; --i)
+		{
+			if (Buffer[i] == c)
+			{
+				return i;
+			}
+		}
+		return INDEX_NONE;
+	}
+
+	uchar& operator[](usize index)
 	{
 		CHECK(index < Length);
 		return Buffer[index];
 	}
 
-	bool operator==(StringView b) const
+	const uchar& operator[](usize index) const
+	{
+		CHECK(index < Length);
+		return Buffer[index];
+	}
+
+	bool operator==(const StringBase& b) const
 	{
 		if (Length != b.Length)
 		{
@@ -23,51 +75,60 @@ public:
 		return Platform::StringCompare(reinterpret_cast<const char*>(Buffer), Length, reinterpret_cast<const char*>(b.Buffer), b.Length);
 	}
 
-	bool operator!=(StringView b) const
+	bool operator!=(const StringBase& b) const
 	{
 		return !(*this == b);
 	}
 
-	const uint8* Buffer;
+protected:
+	uchar* Buffer;
 	usize Length;
+};
+
+class StringView final : public StringBase
+{
+public:
+	StringView()
+		: StringBase(nullptr, 0)
+	{
+	}
+
+	StringView(uchar* buffer, usize length)
+		: StringBase(buffer, length)
+	{
+	}
 };
 
 inline StringView operator ""_view(const char* literal, usize length) noexcept
 {
-	return StringView { reinterpret_cast<const uint8*>(literal), length };
+	return StringView { reinterpret_cast<uchar*>(const_cast<char*>(literal)), length };
 }
 
-class String
+class String final : public StringBase
 {
 public:
 	explicit String(Allocator* allocator = &GlobalAllocator::Get())
-		: Buffer(nullptr)
-		, Length(0)
+		: StringBase(nullptr, 0)
 		, Capacity(0)
 		, Allocator(allocator)
 	{
 	}
 
 	explicit String(StringView view, Allocator* allocator = &GlobalAllocator::Get())
-		: Length(view.Length)
-		, Capacity(view.Length)
+		: StringBase(nullptr, view.GetLength())
+		, Capacity(view.GetLength())
 		, Allocator(allocator)
 	{
-		Buffer = static_cast<uint8*>(Allocator->Allocate(Capacity));
-		Platform::MemoryCopy(Buffer, view.Buffer, Capacity);
-	}
-
-	String(const uint8* data, usize length, Allocator* allocator = &GlobalAllocator::Get())
-		: String(StringView { data, length }, allocator)
-	{
+		Buffer = static_cast<uchar*>(Allocator->Allocate(Capacity));
+		Platform::MemoryCopy(Buffer, view.GetData(), Capacity);
 	}
 
 	explicit String(usize capacity, Allocator* allocator = &GlobalAllocator::Get())
-		: Length(0)
+		: StringBase(nullptr, 0)
 		, Capacity(capacity)
 		, Allocator(allocator)
 	{
-		Buffer = static_cast<uint8*>(Allocator->Allocate(Capacity));
+		Buffer = static_cast<uchar*>(Allocator->Allocate(Capacity));
 	}
 
 	~String()
@@ -87,11 +148,11 @@ public:
 	}
 
 	String(const String& copy)
-		: Length(copy.Length)
+		: StringBase(copy)
 		, Capacity(copy.Capacity)
 		, Allocator(copy.Allocator)
 	{
-		uint8* newBuffer = static_cast<uint8*>(Allocator->Allocate(Capacity));
+		uchar* newBuffer = static_cast<uchar*>(Allocator->Allocate(Capacity));
 		Platform::MemoryCopy(newBuffer, copy.Buffer, Length);
 		Buffer = newBuffer;
 	}
@@ -103,7 +164,7 @@ public:
 		this->~String();
 
 		Allocator = copy.Allocator;
-		uint8* newBuffer = static_cast<uint8*>(Allocator->Allocate(copy.Capacity));
+		uchar* newBuffer = static_cast<uchar*>(Allocator->Allocate(copy.Capacity));
 		Platform::MemoryCopy(newBuffer, copy.Buffer, copy.Length);
 		Buffer = newBuffer;
 
@@ -114,8 +175,7 @@ public:
 	}
 
 	String(String&& move) noexcept
-		: Buffer(move.Buffer)
-		, Length(move.Length)
+		: StringBase(move)
 		, Capacity(move.Capacity)
 		, Allocator(move.Allocator)
 	{
@@ -142,35 +202,7 @@ public:
 		return *this;
 	}
 
-	uint8& operator[](usize index)
-	{
-		CHECK(index < Length);
-		return Buffer[index];
-	}
-
-	const uint8& operator[](usize index) const
-	{
-		CHECK(index < Length);
-		return Buffer[index];
-	}
-
-	uint8* GetData() const
-	{
-		CHECK(Buffer);
-		return Buffer;
-	}
-
-	usize GetLength() const
-	{
-		return Length;
-	}
-
-	bool IsEmpty() const
-	{
-		return Length == 0;
-	}
-
-	void Append(uint8 c)
+	void Append(uchar c)
 	{
 		if (Length == Capacity)
 		{
@@ -180,22 +212,27 @@ public:
 		++Length;
 	}
 
-	void Append(StringView view)
+	void Append(StringView view, usize length)
 	{
-		const usize newLength = Length + view.Length;
+		const usize newLength = Length + length;
 		if (newLength > Capacity)
 		{
-			Grow((Capacity + view.Length) * 2);
+			Grow((Capacity + length) * 2);
 		}
-		Platform::MemoryCopy(Buffer + Length, view.Buffer, view.Length);
+		Platform::MemoryCopy(Buffer + Length, view.GetData(), length);
 		Length = newLength;
+	}
+
+	void Append(StringView view)
+	{
+		Append(view, view.GetLength());
 	}
 
 	void Reserve(usize capacity)
 	{
 		CHECK(IsEmpty());
 		Capacity = capacity;
-		Buffer = static_cast<uint8*>(Allocator->Allocate(Capacity));
+		Buffer = static_cast<uchar*>(Allocator->Allocate(Capacity));
 	}
 
 	void Clear()
@@ -208,38 +245,10 @@ public:
 		return StringView { Buffer, Length };
 	}
 
-	bool operator==(const String& b) const
-	{
-		if (Length != b.Length)
-		{
-			return false;
-		}
-		return Platform::StringCompare(reinterpret_cast<const char*>(Buffer), Length, reinterpret_cast<const char*>(b.Buffer), b.Length);
-	}
-
-	bool operator!=(const String& b) const
-	{
-		return !(*this == b);
-	}
-
-	bool operator==(StringView b) const
-	{
-		if (Length != b.Length)
-		{
-			return false;
-		}
-		return Platform::StringCompare(reinterpret_cast<const char*>(Buffer), Length, reinterpret_cast<const char*>(b.Buffer), b.Length);
-	}
-
-	bool operator!=(StringView b) const
-	{
-		return !(*this == b);
-	}
-
 private:
 	void Grow(usize newCapacity)
 	{
-		uint8* resized = static_cast<uint8*>(Allocator->Allocate(newCapacity));
+		uchar* resized = static_cast<uchar*>(Allocator->Allocate(newCapacity));
 		Platform::MemoryCopy(resized, Buffer, Length);
 		Allocator->Deallocate(Buffer, Capacity);
 
@@ -247,8 +256,6 @@ private:
 		Capacity = newCapacity;
 	}
 
-	uint8* Buffer;
-	usize Length;
 	usize Capacity;
 	Allocator* Allocator;
 };
