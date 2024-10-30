@@ -16,11 +16,16 @@ using uchar = uint8;
 
 #define ARRAY_COUNT(a) (sizeof((a)) / sizeof((a)[0]))
 
-#define INDEX_NONE (~static_cast<usize>(0))
+#define INDEX_NONE (static_cast<usize>(~0))
 
-#define TOKEN_PASTE_(a, b) a##b
-#define TOKEN_PASTE(a, b) TOKEN_PASTE_(a, b)
+#define UINT8_MAX (static_cast<uint8>(~0))
+#define UINT16_MAX (static_cast<uint16>(~0))
+#define UINT32_MAX (static_cast<uint32>(~0))
+#define UINT64_MAX (static_cast<uint64>(~0))
 
 #define KB(x) ((x) * 1024ULL)
 #define MB(x) (KB(x) * 1024ULL)
 #define GB(x) (MB(x) * 1024ULL)
+
+#define TOKEN_PASTE_(a, b) a##b
+#define TOKEN_PASTE(a, b) TOKEN_PASTE_(a, b)
