@@ -232,6 +232,13 @@ public:
 
 	void Clear()
 	{
+		if constexpr (!IsTriviallyCopyable<T>::Value)
+		{
+			for (usize i = 0; i < Length; ++i)
+			{
+				Elements[i].~T();
+			}
+		}
 		Length = 0;
 	}
 
