@@ -83,19 +83,20 @@ public:
 		return Vector { scale * X, scale * Y, scale * Z };
 	}
 
-	float GetLength() const
-	{
-		return SquareRoot(X * X + Y * Y + Z * Z);
-	}
-
-	float GetLengthSquared() const
+	float GetMagnitudeSquared() const
 	{
 		return X * X + Y * Y + Z * Z;
 	}
 
-	Vector Normalize() const
+	float GetMagnitude() const
 	{
-		const float length = GetLength();
+		return SquareRoot(GetMagnitudeSquared());
+	}
+
+	Vector GetNormalized() const
+	{
+		const float length = GetMagnitude();
+		CHECK(length != 0.0f);
 		return Vector { X / length, Y / length, Z / length };
 	}
 
@@ -119,7 +120,7 @@ public:
 	float Z;
 };
 
-inline const Vector Vector::Zero = { 0, 0, 0 };
+inline const Vector Vector::Zero = { 0.0f, 0.0f, 0.0f };
 
 class Matrix
 {
@@ -152,6 +153,11 @@ public:
 		};
 	}
 
+	static Matrix Scale(const Vector& scale)
+	{
+		return Scale(scale.X, scale.Y, scale.Z);
+	}
+
 	static Matrix Translation(float x, float y, float z)
 	{
 		return Matrix
@@ -163,8 +169,27 @@ public:
 		};
 	}
 
+	static Matrix Translation(const Vector& location)
+	{
+		return Translation(location.X, location.Y, location.Z);
+	}
+
+	static Matrix LookAt(Vector position, Vector direction, Vector up)
+	{
+		const Vector right = direction.Cross(up).GetNormalized();
+		up = right.Cross(direction);
+		return Matrix
+		{
+			right.X,              up.X,              -direction.X,            0.0f,
+			right.Y,              up.Y,              -direction.Y,            0.0f,
+			right.Z,              up.Z,              -direction.Z,            0.0f,
+			-position.Dot(right), -position.Dot(up), position.Dot(direction), 1.0f,
+		};
+	}
+
 	static Matrix Orthographic(float leftX, float rightX, float topY, float bottomY, float nearZ, float farZ)
 	{
+		CHECK(rightX - leftX != 0.0f && topY - bottomY != 0.0f && farZ - nearZ != 0.0f);
 		return Matrix
 		{
 			2.0f / (rightX - leftX),              0.0f,                                 0.0f,                    0.0f,
@@ -176,8 +201,12 @@ public:
 
 	static Matrix Perspective(float fieldOfViewYDegrees, float aspectRatio, float nearZ, float farZ)
 	{
-		const float height = 1.0f / Tangent(0.5f * fieldOfViewYDegrees * DegreesToRadians);
+		const float inverseHeight = Tangent(0.5f * fieldOfViewYDegrees * DegreesToRadians);
+		CHECK(inverseHeight != 0.0f);
+		const float height = 1.0f / inverseHeight;
+		CHECK(aspectRatio != 0.0f);
 		const float width = height / aspectRatio;
+		CHECK(nearZ - farZ != 0.0f);
 		const float range = farZ / (nearZ - farZ);
 		return Matrix
 		{
@@ -185,20 +214,6 @@ public:
 			0.0f,  height, 0.0f,          0.0f,
 			0.0f,  0.0f,   range,         -1.0f,
 			0.0f,  0.0f,   range * nearZ, 0.0f,
-		};
-	}
-
-	static Matrix LookAt(Vector position, Vector at, Vector up)
-	{
-		const Vector back = (at - position).Normalize();
-		const Vector right = back.Cross(up).Normalize();
-		up = right.Cross(back);
-		return Matrix
-		{
-			right.X,              up.X,              -back.X,            0.0f,
-			right.Y,              up.Y,              -back.Y,            0.0f,
-			right.Z,              up.Z,              -back.Z,            0.0f,
-			-position.Dot(right), -position.Dot(up), position.Dot(back), 1.0f,
 		};
 	}
 
@@ -273,7 +288,7 @@ public:
 		};
 	}
 
-	Vector Transform(Vector b) const
+	Vector Transform(const Vector& b) const
 	{
 		return Vector
 		{
@@ -283,7 +298,7 @@ public:
 		};
 	}
 
-	Vector TransformDirection(Vector b) const
+	Vector TransformDirection(const Vector& b) const
 	{
 		return Vector
 		{
@@ -293,46 +308,45 @@ public:
 		};
 	}
 
-	Matrix Inverse() const
+	Matrix GetInverse() const
 	{
-		const Vector a = { M00, M10, M20 };
-		const Vector b = { M01, M11, M21 };
-		const Vector c = { M02, M12, M22 };
-		const Vector d = { M03, M13, M23 };
-
-		const float x = M30;
-		const float y = M31;
-		const float z = M32;
-		const float w = M33;
-
-		Vector s = a.Cross(b);
-		Vector t = c.Cross(d);
-		Vector u = a * y - b * x;
-		Vector v = c * w - d * z;
-
-		const float determinant = s.Dot(v) + t.Dot(u);
+		const float determinant = M00 * (M11 * (M22 * M33 - M23 * M32) - M21 * (M12 * M33 - M13 * M32) + M31 * (M12 * M23 - M13 * M22)) -
+								  M10 * (M01 * (M22 * M33 - M23 * M32) - M21 * (M02 * M33 - M03 * M32) + M31 * (M02 * M23 - M03 * M22)) +
+								  M20 * (M01 * (M12 * M33 - M13 * M32) - M11 * (M02 * M33 - M03 * M32) + M31 * (M02 * M13 - M03 * M12)) -
+								  M30 * (M01 * (M12 * M23 - M13 * M22) - M11 * (M02 * M23 - M03 * M22) + M21 * (M02 * M13 - M03 * M12));
 		CHECK(determinant != 0.0f);
 		const float inverseDeterminant = 1.0f / determinant;
-		s = s * inverseDeterminant;
-		t = t * inverseDeterminant;
-		u = u * inverseDeterminant;
-		v = v * inverseDeterminant;
 
-		const Vector v0 = b.Cross(v) + t * y;
-		const Vector v1 = v.Cross(a) - t * x;
-		const Vector v2 = d.Cross(u) + s * w;
-		const Vector v3 = u.Cross(c) - s * z;
+		const float i00 =  (M11 * (M22 * M33 - M32 * M23) - M21 * (M12 * M33 - M32 * M13) + M31 * (M12 * M23 - M22 * M13)) * inverseDeterminant;
+		const float i01 = -(M01 * (M22 * M33 - M32 * M23) - M21 * (M02 * M33 - M32 * M03) + M31 * (M02 * M23 - M22 * M03)) * inverseDeterminant;
+		const float i02 =  (M01 * (M12 * M33 - M32 * M13) - M11 * (M02 * M33 - M32 * M03) + M31 * (M02 * M13 - M12 * M03)) * inverseDeterminant;
+		const float i03 = -(M01 * (M12 * M23 - M22 * M13) - M11 * (M02 * M23 - M22 * M03) + M21 * (M02 * M13 - M12 * M03)) * inverseDeterminant;
+
+		const float i10 = -(M10 * (M22 * M33 - M32 * M23) - M20 * (M12 * M33 - M32 * M13) + M30 * (M12 * M23 - M22 * M13)) * inverseDeterminant;
+		const float i11 =  (M00 * (M22 * M33 - M32 * M23) - M20 * (M02 * M33 - M32 * M03) + M30 * (M02 * M23 - M22 * M03)) * inverseDeterminant;
+		const float i12 = -(M00 * (M12 * M33 - M32 * M13) - M10 * (M02 * M33 - M32 * M03) + M30 * (M02 * M13 - M12 * M03)) * inverseDeterminant;
+		const float i13 =  (M00 * (M12 * M23 - M22 * M13) - M10 * (M02 * M23 - M22 * M03) + M20 * (M02 * M13 - M12 * M03)) * inverseDeterminant;
+
+		const float i20 =  (M10 * (M21 * M33 - M31 * M23) - M20 * (M11 * M33 - M31 * M13) + M30 * (M11 * M23 - M21 * M13)) * inverseDeterminant;
+		const float i21 = -(M00 * (M21 * M33 - M31 * M23) - M20 * (M01 * M33 - M31 * M03) + M30 * (M01 * M23 - M21 * M03)) * inverseDeterminant;
+		const float i22 =  (M00 * (M11 * M33 - M31 * M13) - M10 * (M01 * M33 - M31 * M03) + M30 * (M01 * M13 - M11 * M03)) * inverseDeterminant;
+		const float i23 = -(M00 * (M11 * M23 - M21 * M13) - M10 * (M01 * M23 - M21 * M03) + M20 * (M01 * M13 - M11 * M03)) * inverseDeterminant;
+
+		const float i30 = -(M10 * (M21 * M32 - M31 * M22) - M20 * (M11 * M32 - M31 * M12) + M30 * (M11 * M22 - M21 * M12)) * inverseDeterminant;
+		const float i31 =  (M00 * (M21 * M32 - M31 * M22) - M20 * (M01 * M32 - M31 * M02) + M30 * (M01 * M22 - M21 * M02)) * inverseDeterminant;
+		const float i32 = -(M00 * (M11 * M32 - M31 * M12) - M10 * (M01 * M32 - M31 * M02) + M30 * (M01 * M12 - M11 * M02)) * inverseDeterminant;
+		const float i33 =  (M00 * (M11 * M22 - M21 * M12) - M10 * (M01 * M22 - M21 * M02) + M20 * (M01 * M12 - M11 * M02)) * inverseDeterminant;
 
 		return Matrix
 		{
-			v0.X, v0.Y, v0.Z, -b.Dot(t),
-			v1.X, v1.Y, v1.Z,  a.Dot(t),
-			v2.X, v2.Y, v2.Z, -d.Dot(s),
-			v3.X, v3.Y, v3.Z,  c.Dot(s),
+			i00, i10, i20, i30,
+			i01, i11, i21, i31,
+			i02, i12, i22, i32,
+			i03, i13, i23, i33,
 		};
 	}
 
-	Matrix Transpose() const
+	Matrix GetTranspose() const
 	{
 		return Matrix
 		{
