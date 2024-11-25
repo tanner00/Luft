@@ -370,3 +370,70 @@ inline const Matrix Matrix::Identity =
 	0.0f, 0.0f, 1.0f, 0.0f,
 	0.0f, 0.0f, 0.0f, 1.0f,
 };
+
+class Quaternion
+{
+public:
+	static const Quaternion Identity;
+
+	Quaternion() = default;
+
+	Quaternion(float x, float y, float z, float w)
+		: X(x), Y(y), Z(z), W(w)
+	{
+	}
+
+	Quaternion operator*(const Quaternion& b) const
+	{
+		return Quaternion
+		{
+			W * b.X + X * b.W + Y * b.Z - Z * b.Y,
+			W * b.Y - X * b.Z + Y * b.W + Z * b.X,
+			W * b.Z + X * b.Y - Y * b.X + Z * b.W,
+			W * b.W - X * b.X - Y * b.Y - Z * b.Z,
+		};
+	}
+
+	Quaternion GetConjugate() const
+	{
+		return Quaternion { -X, -Y, -Z, W };
+	}
+
+	Vector Rotate(const Vector& v) const
+	{
+		const Quaternion vQuaternion = { v.X, v.Y, v.Z, 0.0f };
+		const Quaternion rotated = *this * vQuaternion * GetConjugate();
+		return Vector { rotated.X, rotated.Y, rotated.Z };
+	}
+
+	Matrix GetMatrix() const
+	{
+		const float ww = W * W;
+		const float xx = X * X;
+		const float yy = Y * Y;
+		const float zz = Z * Z;
+
+		const float wx = W * X;
+		const float wy = W * Y;
+		const float wz = W * Z;
+
+		const float xy = X * Y;
+		const float xz = X * Z;
+		const float yz = Y * Z;
+
+		return Matrix
+		{
+			ww + xx - yy - zz, 2.0f * (xy + wz),  2.0f * (xz - wy),  0.0f,
+			2.0f * (xy - wz),  ww - xx + yy - zz, 2.0f * (yz + wx),  0.0f,
+			2.0f * (xz + wy),  2.0f * (yz - wx),  ww - xx - yy + zz, 0.0f,
+			0.0f,              0.0f,              0.0f,              1.0f,
+		};
+	}
+
+	float X;
+	float Y;
+	float Z;
+	float W;
+};
+
+inline const Quaternion Quaternion::Identity = { 0.0f, 0.0f, 0.0f, 1.0f };
