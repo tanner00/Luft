@@ -12,8 +12,6 @@ using uint64 = unsigned long long;
 
 using usize = unsigned long long;
 
-using uchar = uint8;
-
 #define ARRAY_COUNT(a) (sizeof((a)) / sizeof((a)[0]))
 
 #define INDEX_NONE (static_cast<usize>(~0))
