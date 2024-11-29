@@ -125,7 +125,7 @@ void StringPrint(const char* formatNullTerminated, char* buffer, usize bufferSiz
 {
 	va_list args;
 	va_start(args, bufferSize);
-	const int result = vsnprintf(buffer, bufferSize, formatNullTerminated, args);
+	const int32 result = vsnprintf(buffer, bufferSize, formatNullTerminated, args);
 	CHECK(result);
 	va_end(args);
 }
@@ -133,6 +133,19 @@ void StringPrint(const char* formatNullTerminated, char* buffer, usize bufferSiz
 void Log(const char* messageNullTerminated)
 {
 	OutputDebugStringA(messageNullTerminated);
+}
+
+void LogFormatted(const char* formatNullTerminated, ...)
+{
+	char logBuffer[4096];
+
+	va_list args;
+	va_start(args, formatNullTerminated);
+	const int32 result = vsnprintf(logBuffer, sizeof(logBuffer), formatNullTerminated, args);
+	CHECK(result);
+	va_end(args);
+
+	Log(logBuffer);
 }
 
 uint8* ReadEntireFile(const char* filePath, usize filePathSize, usize* outSize, Allocator& allocator)
