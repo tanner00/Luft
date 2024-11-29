@@ -67,6 +67,8 @@ void FatalError(const char* errorMessageNullTerminated);
 
 uint8* ReadEntireFile(const char* filePath, usize filePathSize, usize* outSize, Allocator& allocator);
 
+double GetTime();
+
 bool IsQuitRequested();
 void ProcessEvents();
 

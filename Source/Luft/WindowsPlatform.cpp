@@ -29,6 +29,8 @@ static Platform::MessageHandler MessageHandlerOverride = NoOpMessageHandler;
 static Platform::ResizeHandler ResizeHandlerOverride = NoOpResizeHandler;
 static bool QuitRequested = false;
 
+static uint64 Frequency;
+
 static HashTable<uint16, Key> WindowsKeyMap(32, &GlobalAllocator::Get());
 static bool KeyPressed[static_cast<usize>(Key::Count)] = {};
 static bool KeyPressedOnce[static_cast<usize>(Key::Count)] = {};
@@ -162,6 +164,13 @@ uint8* ReadEntireFile(const char* filePath, usize filePathSize, usize* outSize, 
 
 	CHECK(SUCCEEDED(CloseHandle(file)));
 	return fileData;
+}
+
+double GetTime()
+{
+	uint64 time;
+	CHECK(SUCCEEDED(QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(&time))));
+	return static_cast<double>(time) / static_cast<double>(Frequency);
 }
 
 void FatalError(const char* errorMessageNullTerminated)
@@ -379,6 +388,8 @@ extern void Start();
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
+	CHECK(SUCCEEDED(QueryPerformanceFrequency(reinterpret_cast<LARGE_INTEGER*>(&Frequency))));
+
 	for (uint16 c = '0'; c <= '9'; ++c)
 	{
 		WindowsKeyMap.Add(c, static_cast<Key>(c - '0'));
