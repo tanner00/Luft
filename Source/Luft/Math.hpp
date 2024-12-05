@@ -199,9 +199,25 @@ public:
 		};
 	}
 
-	static Matrix Perspective(float fieldOfViewYDegrees, float aspectRatio, float nearZ, float farZ)
+	static Matrix Perspective(float fieldOfViewYRadians, float aspectRatio, float nearZ)
 	{
-		const float inverseHeight = Tangent(0.5f * fieldOfViewYDegrees * DegreesToRadians);
+		const float inverseHeight = Tangent(0.5f * fieldOfViewYRadians);
+		CHECK(inverseHeight != 0.0f);
+		const float height = 1.0f / inverseHeight;
+		CHECK(aspectRatio != 0.0f);
+		const float width = height / aspectRatio;
+		return Matrix
+		{
+			width, 0.0f,   0.0f,   0.0f,
+			0.0f,  height, 0.0f,   0.0f,
+			0.0f,  0.0f,   -1.0f,  -1.0f,
+			0.0f,  0.0f,   -nearZ, 0.0f,
+		};
+	}
+
+	static Matrix Perspective(float fieldOfViewYRadians, float aspectRatio, float nearZ, float farZ)
+	{
+		const float inverseHeight = Tangent(0.5f * fieldOfViewYRadians);
 		CHECK(inverseHeight != 0.0f);
 		const float height = 1.0f / inverseHeight;
 		CHECK(aspectRatio != 0.0f);
