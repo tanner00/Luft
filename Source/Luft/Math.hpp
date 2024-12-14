@@ -445,7 +445,7 @@ public:
 		return Vector { rotated.X, rotated.Y, rotated.Z };
 	}
 
-	Matrix GetMatrix() const
+	Matrix ToMatrix() const
 	{
 		const float ww = W * W;
 		const float xx = X * X;
