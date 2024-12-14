@@ -404,6 +404,18 @@ public:
 	{
 	}
 
+	static Quaternion AxisAngle(const Vector& axis, const float angleRadians)
+	{
+		const float sineTheta2 = Sine(angleRadians / 2);
+		return Quaternion
+		{
+			sineTheta2 * axis.X,
+			sineTheta2 * axis.Y,
+			sineTheta2 * axis.Z,
+			Cosine(angleRadians / 2),
+		};
+	}
+
 	Quaternion operator*(const Quaternion& b) const
 	{
 		return Quaternion
@@ -418,6 +430,12 @@ public:
 	Quaternion GetConjugate() const
 	{
 		return Quaternion { -X, -Y, -Z, W };
+	}
+
+	Quaternion GetNormalized() const
+	{
+		const float magnitude = SquareRoot(X * X + Y * Y + Z * Z + W * W);
+		return Quaternion { X / magnitude, Y / magnitude, Z / magnitude, W / magnitude };
 	}
 
 	Vector Rotate(const Vector& v) const
