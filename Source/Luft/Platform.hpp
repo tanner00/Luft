@@ -3,14 +3,18 @@
 #include "Base.hpp"
 
 #if WINDOWS
-
 #define BREAK_IN_DEBUGGER __debugbreak
-
 #else
 #error "The platform layer is currently unimplemented for this target!"
 #endif
 
 class Allocator;
+
+enum class InputMode
+{
+	Default,
+	Captured,
+};
 
 enum class Key
 {
@@ -77,6 +81,10 @@ Window* MakeWindow(const char* name, uint32 drawWidth, uint32 drawHeight);
 void DestroyWindow(Window* window);
 void ShowWindow(const Window* window);
 void SetWindowTitle(const Window* window, const char* title);
+bool IsWindowFocused(const Window* window);
+
+InputMode GetInputMode();
+void SetInputMode(const Window* window, InputMode mode);
 
 void InstallMessageHandler(MessageHandler handler);
 void InstallResizeHandler(ResizeHandler handler);

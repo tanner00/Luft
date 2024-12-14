@@ -27,6 +27,7 @@ static void NoOpResizeHandler(Platform::Window*)
 
 static Platform::MessageHandler MessageHandlerOverride = NoOpMessageHandler;
 static Platform::ResizeHandler ResizeHandlerOverride = NoOpResizeHandler;
+
 static bool QuitRequested = false;
 
 static uint64 Frequency;
@@ -37,8 +38,11 @@ static bool KeyPressedOnce[static_cast<usize>(Key::Count)] = {};
 
 static bool MouseButtonPressed[static_cast<usize>(MouseButton::Count)] = {};
 static bool MouseButtonPressedOnce[static_cast<usize>(MouseButton::Count)] = {};
+
 static int32 MouseX = 0;
 static int32 MouseY = 0;
+
+static InputMode CurrentInputMode = InputMode::Default;
 
 bool IsKeyPressed(Key key)
 {
@@ -255,7 +259,7 @@ static LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPA
 			}
 			KeyPressed[keyIndex] = true;
 		}
-		break;
+		return 0;
 	}
 	case WM_KEYUP:
 	{
@@ -266,7 +270,7 @@ static LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPA
 			KeyPressed[keyIndex] = false;
 			KeyPressedOnce[keyIndex] = false;
 		}
-		break;
+		return 0;
 	}
 	case WM_LBUTTONDOWN:
 	{
@@ -276,14 +280,14 @@ static LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPA
 			MouseButtonPressedOnce[button] = true;
 		}
 		MouseButtonPressed[button] = true;
-		break;
+		return 0;
 	}
 	case WM_LBUTTONUP:
 	{
 		static constexpr usize button = static_cast<usize>(MouseButton::Left);
 		MouseButtonPressedOnce[button] = false;
 		MouseButtonPressed[button] = false;
-		break;
+		return 0;
 	}
 	case WM_RBUTTONDOWN:
 	{
@@ -293,21 +297,44 @@ static LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPA
 			MouseButtonPressedOnce[button] = true;
 		}
 		MouseButtonPressed[button] = true;
-		break;
+		return 0;
 	}
 	case WM_RBUTTONUP:
 	{
 		static constexpr usize button = static_cast<usize>(MouseButton::Right);
 		MouseButtonPressedOnce[button] = false;
 		MouseButtonPressed[button] = false;
-		break;
+		return 0;
 	}
 	case WM_MOUSEMOVE:
+	{
 		MouseX = static_cast<int32>(LOWORD(lParam));
 		MouseY = static_cast<int32>(HIWORD(lParam));
-		break;
-	default:
-		break;
+
+		if (CurrentInputMode == InputMode::Captured)
+		{
+			const Window* userWindow = reinterpret_cast<Window*>(GetWindowLongPtrA(window, 0));
+
+			POINT centerScreenPosition =
+			{
+				static_cast<int32>(userWindow->DrawWidth) / 2,
+				static_cast<int32>(userWindow->DrawHeight) / 2,
+			};
+
+			MouseX -= centerScreenPosition.x;
+			MouseY -= centerScreenPosition.y;
+
+			ClientToScreen(window, &centerScreenPosition);
+			SetCursorPos(centerScreenPosition.x, centerScreenPosition.y);
+		}
+		return 0;
+	}
+	case WM_KILLFOCUS:
+		MemorySet(KeyPressed, false, sizeof(KeyPressed));
+		MemorySet(KeyPressedOnce, false, sizeof(KeyPressedOnce));
+		MemorySet(MouseButtonPressed, false, sizeof(MouseButtonPressed));
+		MemorySet(MouseButtonPressedOnce, false, sizeof(MouseButtonPressedOnce));
+		return 0;
 	}
 	return DefWindowProcA(window, message, wParam, lParam);
 }
@@ -319,10 +346,9 @@ Window* MakeWindow(const char* name, uint32 drawWidth, uint32 drawHeight)
 
 	const HMODULE instance = GetModuleHandleA(nullptr);
 
-	const usize windowClassNameLength = strlen(name) + (sizeof(" Window Class") - 1) + (sizeof('\0') - 1) + 1;
+	const usize windowClassNameLength = StringLength(name) + (sizeof(" Window Class") - 1) + (sizeof('\0') - 1) + 1;
 	char* windowClassName = static_cast<char*>(GlobalAllocator::Get().Allocate(windowClassNameLength));
-	const int printResult = sprintf_s(windowClassName, windowClassNameLength, "%s Window Class", name);
-	CHECK(SUCCEEDED(printResult));
+	StringPrint("%s Window Class", windowClassName, windowClassNameLength, name);
 
 	const WNDCLASSEXA windowClass =
 	{
@@ -341,11 +367,11 @@ Window* MakeWindow(const char* name, uint32 drawWidth, uint32 drawHeight)
 	static constexpr DWORD exStyle = WS_EX_APPWINDOW;
 	static constexpr DWORD style = WS_OVERLAPPEDWINDOW;
 
-	RECT windowRect = { 0, 0, static_cast<int32>(drawWidth), static_cast<int32>(drawHeight) };
-	AdjustWindowRectExForDpi(&windowRect, style, FALSE, exStyle, GetDpiForSystem());
+	RECT windowRectangle = { 0, 0, static_cast<int32>(drawWidth), static_cast<int32>(drawHeight) };
+	AdjustWindowRectExForDpi(&windowRectangle, style, FALSE, exStyle, GetDpiForSystem());
 
 	const HWND window = CreateWindowExA(exStyle, windowClass.lpszClassName, name, style,
-										0, 0, windowRect.right - windowRect.left, windowRect.bottom - windowRect.top,
+										0, 0, windowRectangle.right - windowRectangle.left, windowRectangle.bottom - windowRectangle.top,
 										nullptr, nullptr, instance, nullptr);
 	CHECK(window);
 
@@ -383,6 +409,57 @@ void ShowWindow(const Window* window)
 void SetWindowTitle(const Window* window, const char* title)
 {
 	SetWindowTextA(static_cast<HWND>(window->Handle), title);
+}
+
+bool IsWindowFocused(const Window* window)
+{
+	return GetActiveWindow() == static_cast<HWND>(window->Handle);
+}
+
+InputMode GetInputMode()
+{
+	return CurrentInputMode;
+}
+
+void SetInputMode(const Window* window, InputMode mode)
+{
+	if (mode == CurrentInputMode)
+	{
+		return;
+	}
+
+	switch (mode)
+	{
+	case InputMode::Default:
+	{
+		ClipCursor(nullptr);
+		ShowCursor(true);
+		break;
+	}
+	case InputMode::Captured:
+	{
+		const HWND nativeWindow = static_cast<HWND>(window->Handle);
+
+		RECT screenRectangle;
+		GetClientRect(nativeWindow, &screenRectangle);
+		ClientToScreen(nativeWindow, reinterpret_cast<POINT*>(&screenRectangle.left));
+		ClientToScreen(nativeWindow, reinterpret_cast<POINT*>(&screenRectangle.right));
+		ClipCursor(&screenRectangle);
+
+		ShowCursor(false);
+
+		const int32 screenCenterX = (screenRectangle.left + screenRectangle.right) / 2;
+		const int32 screenCenterY = (screenRectangle.top + screenRectangle.bottom) / 2;
+		SetCursorPos(screenCenterX, screenCenterY);
+
+		MouseX = 0;
+		MouseY = 0;
+
+		break;
+	}
+	}
+
+	CurrentInputMode = mode;
 }
 
 void InstallMessageHandler(MessageHandler handler)
