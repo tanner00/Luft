@@ -419,6 +419,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	WindowsKeyMap.Add(VK_BACK, Key::Backspace);
 	WindowsKeyMap.Add(VK_SPACE, Key::Space);
 	WindowsKeyMap.Add(VK_RETURN, Key::Enter);
+	WindowsKeyMap.Add(VK_SHIFT, Key::Shift);
 
 	const usize startingUsed = GlobalAllocator::Get().GetUsed();
 
