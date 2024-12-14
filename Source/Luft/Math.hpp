@@ -476,3 +476,61 @@ public:
 };
 
 inline const Quaternion Quaternion::Identity = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+inline void DecomposeTransform(const Matrix& transform, Vector* translation, Quaternion* orientation, Vector* scale)
+{
+	if (translation)
+	{
+		translation->X = transform(0, 3);
+		translation->Y = transform(1, 3);
+		translation->Z = transform(2, 3);
+	}
+
+	const float determinant = transform(0, 0) * (transform(1, 1) * transform(2, 2) - transform(1, 2) * transform(2, 1)) -
+							  transform(1, 0) * (transform(0, 1) * transform(2, 2) - transform(2, 1) * transform(0, 2)) +
+							  transform(2, 0) * (transform(0, 1) * transform(1, 2) - transform(1, 1) * transform(0, 2));
+	const float sign = (determinant < 0.0f) ? -1.0f : +1.0f;
+
+	const Vector transformScale =
+	{
+		SquareRoot(transform(0, 0) * transform(0, 0) + transform(1, 0) * transform(1, 0) + transform(2, 0) * transform(2, 0)) * sign,
+		SquareRoot(transform(0, 1) * transform(0, 1) + transform(1, 1) * transform(1, 1) + transform(2, 1) * transform(2, 1)) * sign,
+		SquareRoot(transform(0, 2) * transform(0, 2) + transform(1, 2) * transform(1, 2) + transform(2, 2) * transform(2, 2)) * sign,
+	};
+	if (scale)
+	{
+		*scale = transformScale;
+	}
+
+	if (orientation)
+	{
+		const float inverseScaleX = (transformScale.X == 0.0f) ? 0.0f : (1.0f / transformScale.X);
+		const float inverseScaleY = (transformScale.Y == 0.0f) ? 0.0f : (1.0f / transformScale.Y);
+		const float inverseScaleZ = (transformScale.Z == 0.0f) ? 0.0f : (1.0f / transformScale.Z);
+
+		const float transformOrientation[3][3] =
+		{
+			{ transform(0, 0) * inverseScaleX, transform(0, 1) * inverseScaleY, transform(0, 2) * inverseScaleZ },
+			{ transform(1, 0) * inverseScaleX, transform(1, 1) * inverseScaleY, transform(1, 2) * inverseScaleZ },
+			{ transform(2, 0) * inverseScaleX, transform(2, 1) * inverseScaleY, transform(2, 2) * inverseScaleZ },
+		};
+
+		const uint32 control = (transformOrientation[2][2] < 0) ?
+							((transformOrientation[0][0] > transformOrientation[1][1]) ? 0 : 1) :
+							((transformOrientation[0][0] < -transformOrientation[1][1]) ? 2 : 3);
+		const float sign1 = (control & 2) ? -1.0f : +1.0f;
+		const float sign2 = (control & 1) ? -1.0f : +1.0f;
+		const float sign3 = ((control - 1) & 2) ? -1.0f : +1.0f;
+
+		const float t = 1.0f - (sign3 * transformOrientation[0][0]) -
+							   (sign2 * transformOrientation[1][1]) -
+							   (sign1 * transformOrientation[2][2]);
+		const float s = 0.5f / SquareRoot(t);
+
+		float* orientationComponents = reinterpret_cast<float*>(orientation);
+		orientationComponents[control ^ 0] = s * t;
+		orientationComponents[control ^ 1] = s * (transformOrientation[1][0] + sign1 * transformOrientation[0][1]);
+		orientationComponents[control ^ 2] = s * (transformOrientation[0][2] + sign2 * transformOrientation[2][0]);
+		orientationComponents[control ^ 3] = s * (transformOrientation[2][1] + sign3 * transformOrientation[1][2]);
+	}
+}
