@@ -83,6 +83,11 @@ public:
 		return Vector { scale * X, scale * Y, scale * Z };
 	}
 
+	Vector operator-() const
+	{
+		return Vector { -X, -Y, -Z };
+	}
+
 	float GetMagnitudeSquared() const
 	{
 		return X * X + Y * Y + Z * Z;
