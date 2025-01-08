@@ -166,6 +166,16 @@ public:
 		return Length;
 	}
 
+	usize GetElementSize() const
+	{
+		return sizeof(T);
+	}
+
+	usize GetDataSize() const
+	{
+		return Length * GetElementSize();
+	}
+
 	bool IsEmpty() const
 	{
 		return Length == 0;
