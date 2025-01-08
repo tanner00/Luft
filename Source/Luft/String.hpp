@@ -5,10 +5,16 @@
 #include "Base.hpp"
 #include "Platform.hpp"
 
-class StringBase
+class StringView
 {
 public:
-	StringBase(char* buffer, usize length)
+	StringView()
+		: Buffer(nullptr)
+		, Length(0)
+	{
+	}
+
+	StringView(char* buffer, usize length)
 		: Buffer(buffer)
 		, Length(length)
 	{
@@ -66,7 +72,7 @@ public:
 		return Buffer[index];
 	}
 
-	bool operator==(const StringBase& b) const
+	bool operator==(const StringView& b) const
 	{
 		if (Length != b.Length)
 		{
@@ -75,7 +81,7 @@ public:
 		return Platform::StringCompare(Buffer, Length, b.Buffer, b.Length);
 	}
 
-	bool operator!=(const StringBase& b) const
+	bool operator!=(const StringView& b) const
 	{
 		return !(*this == b);
 	}
@@ -85,37 +91,23 @@ protected:
 	usize Length;
 };
 
-class StringView final : public StringBase
-{
-public:
-	StringView()
-		: StringBase(nullptr, 0)
-	{
-	}
-
-	StringView(char* buffer, usize length)
-		: StringBase(buffer, length)
-	{
-	}
-};
-
 inline StringView operator ""_view(const char* literal, usize length) noexcept
 {
 	return StringView { const_cast<char*>(literal), length };
 }
 
-class String final : public StringBase
+class String final : public StringView
 {
 public:
 	explicit String(Allocator* allocator = &GlobalAllocator::Get())
-		: StringBase(nullptr, 0)
+		: StringView(nullptr, 0)
 		, Capacity(0)
 		, Allocator(allocator)
 	{
 	}
 
 	explicit String(StringView view, Allocator* allocator = &GlobalAllocator::Get())
-		: StringBase(nullptr, view.GetLength())
+		: StringView(nullptr, view.GetLength())
 		, Capacity(view.GetLength())
 		, Allocator(allocator)
 	{
@@ -124,7 +116,7 @@ public:
 	}
 
 	explicit String(usize capacity, Allocator* allocator = &GlobalAllocator::Get())
-		: StringBase(nullptr, 0)
+		: StringView(nullptr, 0)
 		, Capacity(capacity)
 		, Allocator(allocator)
 	{
@@ -148,7 +140,7 @@ public:
 	}
 
 	String(const String& copy)
-		: StringBase(copy)
+		: StringView(copy)
 		, Capacity(copy.Capacity)
 		, Allocator(copy.Allocator)
 	{
@@ -175,7 +167,7 @@ public:
 	}
 
 	String(String&& move) noexcept
-		: StringBase(move)
+		: StringView(move)
 		, Capacity(move.Capacity)
 		, Allocator(move.Allocator)
 	{
@@ -238,11 +230,6 @@ public:
 	void Clear()
 	{
 		Length = 0;
-	}
-
-	operator StringView() const
-	{
-		return StringView { Buffer, Length };
 	}
 
 private:
