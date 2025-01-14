@@ -194,6 +194,11 @@ public:
 		return *this;
 	}
 
+	const StringView& AsView() const
+	{
+		return *this;
+	}
+
 	void Append(char c)
 	{
 		if (Length == Capacity)
