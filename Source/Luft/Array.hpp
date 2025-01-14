@@ -224,7 +224,7 @@ public:
 
 	void Reserve(usize capacity)
 	{
-		CHECK(IsEmpty());
+		CHECK(Elements == nullptr);
 		Capacity = capacity;
 		Elements = static_cast<T*>(Allocator->Allocate(Capacity * sizeof(T)));
 	}
