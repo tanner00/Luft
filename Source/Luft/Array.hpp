@@ -196,13 +196,24 @@ public:
 	{
 		if (Length == Capacity)
 		{
-			Grow(Capacity ? (Capacity * 2) : 8);
+			const usize doubleCapacity = Capacity * 2;
+			Grow(Capacity ? doubleCapacity : 8);
 		}
 		new (&Elements[Length], LuftNewMarker {}) T(Forward<Args>(args)...);
 		++Length;
 	}
 
 	void AddUninitialized(usize count)
+	{
+		if (Length + count > Capacity)
+		{
+			const usize doubleCapacity = Capacity * 2;
+			Grow((Length + count > doubleCapacity) ? (Length + count) : doubleCapacity);
+		}
+		Length += count;
+	}
+
+	void GrowToLengthUninitialized(usize count)
 	{
 		if (Length + count > Capacity)
 		{
