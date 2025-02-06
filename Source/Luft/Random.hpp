@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "Base.hpp"
+#include "NoCopy.hpp"
 
 struct PcgRandomContext
 {
@@ -25,7 +26,7 @@ inline PcgRandomContext SeedRandomPcg(uint32 initialState)
 	return context;
 }
 
-class RandomContext
+class RandomContext : public NoCopy
 {
 public:
 	explicit RandomContext(uint32 seed)
