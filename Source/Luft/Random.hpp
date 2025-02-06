@@ -8,7 +8,7 @@ struct PcgRandomContext
 	uint32 State;
 };
 
-inline uint32 RandomPcg(PcgRandomContext* context)
+inline uint32 RandomUint32Pcg(PcgRandomContext* context)
 {
 	const uint32 state = context->State;
 	context->State = context->State * 747796405U + 2891336453U;
@@ -22,7 +22,7 @@ inline PcgRandomContext SeedRandomPcg(uint32 initialState)
 	{
 		.State = initialState,
 	};
-	RandomPcg(&context);
+	RandomUint32Pcg(&context);
 	return context;
 }
 
@@ -36,12 +36,12 @@ public:
 
 	uint32 Uint32()
 	{
-		return RandomPcg(&Context);
+		return RandomUint32Pcg(&Context);
 	}
 
 	float Float01()
 	{
-		return static_cast<float>(Uint32()) / static_cast<float>(0xFFFFFFFF);
+		return static_cast<float>(Uint32()) / static_cast<float>(UINT32_MAX);
 	}
 
 private:
