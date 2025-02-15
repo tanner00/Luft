@@ -63,12 +63,12 @@ bool StringCompare(const char* a, usize aLength, const char* b, usize bLength);
 void* Allocate(usize size);
 void Deallocate(void* ptr);
 
-usize StringLength(const char* sNullTerminated);
-void StringPrint(const char* formatNullTerminated, char* buffer, usize bufferSize, ...);
+usize StringLength(const char* string0);
+void StringPrint(const char* format0, char* buffer, usize bufferSize, ...);
 
-void Log(const char* messageNullTerminated);
-void LogFormatted(const char* formatNullTerminated, ...);
-void FatalError(const char* errorMessageNullTerminated);
+void Log(const char* message0);
+void LogFormatted(const char* format0, ...);
+void FatalError(const char* errorMessage0);
 
 uint8* ReadEntireFile(const char* filePath, usize filePathSize, usize* outSize, Allocator& allocator);
 
