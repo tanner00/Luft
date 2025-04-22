@@ -10,13 +10,13 @@
 
 class Allocator;
 
-enum class InputMode
+enum class InputMode : uint8
 {
 	Default,
 	Captured,
 };
 
-enum class Key
+enum class Key : uint8
 {
 	Zero, One, Two, Three, Four, Five, Six, Seven, Eight, Nine,
 	A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
@@ -25,7 +25,7 @@ enum class Key
 	Count,
 };
 
-enum class MouseButton
+enum class MouseButton : uint8
 {
 	Left,
 	Right,
