@@ -9,6 +9,9 @@ void* GlobalAllocator::Allocate(usize size)
 
 void GlobalAllocator::Deallocate(void* ptr, usize size)
 {
-	Used -= size;
+	if (ptr)
+	{
+		Used -= size;
+	}
 	Platform::Deallocate(ptr);
 }
