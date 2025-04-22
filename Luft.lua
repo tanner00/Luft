@@ -4,7 +4,7 @@ project "Luft"
 	kind "StaticLib"
 
 	SetConfigurationSettings()
-	UseWindowsSettings()
+	UseWindowsSettings("")
 
 	includedirs { "Source" }
 	files { "Source/Luft/**.cpp", "Source/Luft/**.hpp", "Luft.natvis" }

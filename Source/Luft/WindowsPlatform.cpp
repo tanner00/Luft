@@ -1,4 +1,4 @@
-#if WINDOWS
+#if PLATFORM_WINDOWS
 
 #pragma comment(lib, "kernel32")
 #pragma comment(lib, "user32")

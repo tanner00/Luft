@@ -2,7 +2,7 @@
 
 #include "Base.hpp"
 
-#if WINDOWS
+#if PLATFORM_WINDOWS
 #define BREAK_IN_DEBUGGER __debugbreak
 #else
 #error "The platform layer is currently unimplemented for this target!"
