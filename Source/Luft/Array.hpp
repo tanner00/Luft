@@ -90,7 +90,8 @@ public:
 
 	Array& operator=(const Array& copy)
 	{
-		CHECK(&copy != this);
+		if (&copy == this)
+			return *this;
 
 		this->~Array();
 
@@ -129,6 +130,9 @@ public:
 
 	Array& operator=(Array&& move) noexcept
 	{
+		if (&move == this)
+			return *this;
+
 		this->~Array();
 
 		Elements = move.Elements;

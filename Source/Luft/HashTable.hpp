@@ -131,7 +131,8 @@ public:
 
 	HashTable& operator=(const HashTable& copy)
 	{
-		CHECK(&copy != this);
+		if (&copy == this)
+			return *this;
 
 		this->~HashTable();
 
@@ -158,6 +159,9 @@ public:
 
 	HashTable& operator=(HashTable&& move) noexcept
 	{
+		if (&move == this)
+			return *this;
+
 		this->~HashTable();
 
 		Buckets = Move(move.Buckets);

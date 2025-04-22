@@ -151,7 +151,8 @@ public:
 
 	String& operator=(const String& copy)
 	{
-		CHECK(&copy != this);
+		if (&copy == this)
+			return *this;
 
 		this->~String();
 
@@ -179,6 +180,9 @@ public:
 
 	String& operator=(String&& move) noexcept
 	{
+		if (&move == this)
+			return *this;
+
 		this->~String();
 
 		Buffer = move.Buffer;
