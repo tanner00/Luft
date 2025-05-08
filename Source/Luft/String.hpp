@@ -152,7 +152,9 @@ public:
 	String& operator=(const String& copy)
 	{
 		if (&copy == this)
+		{
 			return *this;
+		}
 
 		this->~String();
 
@@ -181,7 +183,9 @@ public:
 	String& operator=(String&& move) noexcept
 	{
 		if (&move == this)
+		{
 			return *this;
+		}
 
 		this->~String();
 

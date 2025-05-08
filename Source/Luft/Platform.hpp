@@ -53,7 +53,7 @@ struct Window
 };
 
 using MessageHandler = bool(*)(void*, uint32, uint64, uint64);
-using ResizeHandler = void(*)(Window* window);
+using ResizeHandler = void(*)(Window*);
 
 void MemorySet(void* destination, uint8 value, usize size);
 void MemoryCopy(void* destination, const void* source, usize size);

@@ -132,7 +132,9 @@ public:
 	HashTable& operator=(const HashTable& copy)
 	{
 		if (&copy == this)
+		{
 			return *this;
+		}
 
 		this->~HashTable();
 
@@ -160,7 +162,9 @@ public:
 	HashTable& operator=(HashTable&& move) noexcept
 	{
 		if (&move == this)
+		{
 			return *this;
+		}
 
 		this->~HashTable();
 
