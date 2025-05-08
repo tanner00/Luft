@@ -20,6 +20,11 @@ public:
 	{
 	}
 
+	static StringView Empty()
+	{
+		return StringView {};
+	}
+
 	char* GetData() const
 	{
 		CHECK(Buffer);
