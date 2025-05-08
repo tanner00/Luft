@@ -27,7 +27,6 @@ public:
 
 	char* GetData() const
 	{
-		CHECK(Buffer);
 		return Buffer;
 	}
 
