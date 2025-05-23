@@ -15,6 +15,11 @@ template<typename T>
 struct IsSame<T, T> : TrueConstant {};
 
 template<typename T>
+struct IsConst : FalseConstant {};
+template<typename T>
+struct IsConst<const T> : TrueConstant {};
+
+template<typename T>
 struct IsLValueReference : FalseConstant {};
 template<typename T>
 struct IsLValueReference<T&> : TrueConstant {};

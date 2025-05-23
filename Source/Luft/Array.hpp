@@ -5,6 +5,8 @@
 #include "Error.hpp"
 #include "Meta.hpp"
 
+#include <initializer_list>
+
 template<typename T>
 class ArrayIterator
 {
@@ -37,6 +39,12 @@ public:
 	ArrayView(T* elements, usize length)
 		: Elements(elements)
 		, Length(length)
+	{
+	}
+
+	ArrayView(std::initializer_list<T> elements) requires IsConst<T>::Value
+		: Elements(elements.begin())
+		, Length(elements.size())
 	{
 	}
 
