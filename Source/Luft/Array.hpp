@@ -241,6 +241,11 @@ public:
 		return *this;
 	}
 
+	ArrayView<T>& AsView()
+	{
+		return *this;
+	}
+
 	const ArrayView<T>& AsView() const
 	{
 		return *this;

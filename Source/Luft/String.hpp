@@ -206,6 +206,11 @@ public:
 		return *this;
 	}
 
+	StringView& AsView()
+	{
+		return *this;
+	}
+
 	const StringView& AsView() const
 	{
 		return *this;
