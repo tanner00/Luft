@@ -11,7 +11,6 @@ using uint32 = unsigned int;
 using uint64 = unsigned long long;
 
 using usize = unsigned long long;
-using uint = uint32;
 
 using bool32 = uint32;
 
