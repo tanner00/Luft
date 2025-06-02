@@ -3,12 +3,12 @@
 #include "Base.hpp"
 #include "NoCopy.hpp"
 
-struct PcgRandomContext
+struct PCGRandomContext
 {
 	uint32 State;
 };
 
-inline uint32 RandomUint32Pcg(PcgRandomContext* context)
+inline uint32 RandomUInt32PCG(PCGRandomContext* context)
 {
 	const uint32 state = context->State;
 	context->State = context->State * 747796405U + 2891336453U;
@@ -16,13 +16,13 @@ inline uint32 RandomUint32Pcg(PcgRandomContext* context)
 	return (word >> 22U) ^ word;
 }
 
-inline PcgRandomContext SeedRandomPcg(uint32 initialState)
+inline PCGRandomContext SeedRandomPCG(uint32 initialState)
 {
-	PcgRandomContext context =
+	PCGRandomContext context =
 	{
 		.State = initialState,
 	};
-	RandomUint32Pcg(&context);
+	RandomUInt32PCG(&context);
 	return context;
 }
 
@@ -30,20 +30,20 @@ class RandomContext : public NoCopy
 {
 public:
 	explicit RandomContext(uint32 seed)
-		: Context(SeedRandomPcg(seed))
+		: Context(SeedRandomPCG(seed))
 	{
 	}
 
-	uint32 Uint32()
+	uint32 UInt32()
 	{
-		return RandomUint32Pcg(&Context);
+		return RandomUInt32PCG(&Context);
 	}
 
 	float Float01()
 	{
-		return static_cast<float>(Uint32()) / static_cast<float>(UINT32_MAX);
+		return static_cast<float>(UInt32()) / static_cast<float>(UINT32_MAX);
 	}
 
 private:
-	PcgRandomContext Context;
+	PCGRandomContext Context;
 };
