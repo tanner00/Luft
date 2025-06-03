@@ -238,6 +238,17 @@ public:
 		};
 	}
 
+	static Matrix ReverseDepth()
+	{
+		return Matrix
+		{
+			1.0f, 0.0f, 0.0f,  0.0f,
+			0.0f, 1.0f, 0.0f,  0.0f,
+			0.0f, 0.0f, -1.0f, 0.0f,
+			0.0f, 0.0f, 1.0f,  1.0f
+		};
+	}
+
 	float& operator()(usize row, usize column)
 	{
 		CHECK(column * Dimension + row < Dimension * Dimension);
