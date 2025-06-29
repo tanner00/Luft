@@ -24,3 +24,11 @@ using bool32 = uint32;
 
 #define TOKEN_PASTE_(a, b) a##b
 #define TOKEN_PASTE(a, b) TOKEN_PASTE_(a, b)
+
+template<typename T>
+void Swap(T& a, T& b)
+{
+	const T swap = a;
+	a = b;
+	b = swap;
+}
