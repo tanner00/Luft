@@ -13,6 +13,7 @@
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include "WindowsUndefine.hpp"
 
 #include <stdio.h>
 
@@ -339,7 +340,7 @@ static LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPA
 	return DefWindowProcA(window, message, wParam, lParam);
 }
 
-Window* MakeWindow(const char* name, uint32 drawWidth, uint32 drawHeight)
+Window* CreateWindow(const char* name, uint32 drawWidth, uint32 drawHeight)
 {
 	BOOL result = SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 	CHECK(result);

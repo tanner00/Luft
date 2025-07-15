@@ -77,7 +77,7 @@ double GetTime();
 bool IsQuitRequested();
 void ProcessEvents();
 
-Window* MakeWindow(const char* name, uint32 drawWidth, uint32 drawHeight);
+Window* CreateWindow(const char* name, uint32 drawWidth, uint32 drawHeight);
 void DestroyWindow(Window* window);
 void ShowWindow(const Window* window);
 void SetWindowTitle(const Window* window, const char* title);
