@@ -1,2 +1,1 @@
-#undef LoadLibrary
 #undef CreateWindow
