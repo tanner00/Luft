@@ -65,6 +65,30 @@ public:
 		return Elements[index];
 	}
 
+	T& First()
+	{
+		CHECK(!IsEmpty());
+		return Elements[0];
+	}
+
+	const T& First() const
+	{
+		CHECK(!IsEmpty());
+		return Elements[0];
+	}
+
+	T& Last()
+	{
+		CHECK(!IsEmpty());
+		return Elements[Length - 1];
+	}
+
+	const T& Last() const
+	{
+		CHECK(!IsEmpty());
+		return Elements[Length - 1];
+	}
+
 	T* GetData() const
 	{
 		return Elements;
