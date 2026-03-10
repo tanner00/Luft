@@ -11,30 +11,26 @@
 	</Expand>
 </Type>
 
-<Type Name="HashTable&lt;*,*&gt;">
-	<DisplayString>Value Count = {ValueCount}, Bucket Count = {Buckets.Length}</DisplayString>
-</Type>
-
-<Type Name="StringView">
-	<DisplayString>Length = {Length}, {Buffer,[Length]s8}</DisplayString>
-	<StringView>{Buffer,[Length]s8}</StringView>
+<Type Name="ArrayView&lt;*&gt;">
+	<DisplayString>Length = {Length}</DisplayString>
 	<Expand>
 		<ArrayItems>
 			<Size>Length</Size>
-			<ValuePointer>Buffer</ValuePointer>
+			<ValuePointer>Elements</ValuePointer>
 		</ArrayItems>
 	</Expand>
 </Type>
 
 <Type Name="String">
-	<DisplayString>Length = {Length}, Capacity = {Capacity}, {Buffer,[Length]s8}</DisplayString>
-	<StringView>{Buffer,[Length]s8}</StringView>
-	<Expand>
-		<ArrayItems>
-			<Size>Length</Size>
-			<ValuePointer>Buffer</ValuePointer>
-		</ArrayItems>
-	</Expand>
+	<DisplayString>{Buffer,[Length]s8}</DisplayString>
+</Type>
+
+<Type Name="StringView">
+	<DisplayString>{Buffer,[Length]s8}</DisplayString>
+</Type>
+
+<Type Name="HashTable&lt;*,*&gt;">
+	<DisplayString>Value Count = {ValueCount}, Bucket Count = {Buckets.Length}</DisplayString>
 </Type>
 
 <Type Name="Vector">
