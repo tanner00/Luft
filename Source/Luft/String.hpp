@@ -233,20 +233,15 @@ public:
 		++Length;
 	}
 
-	void Append(StringView view, usize length)
-	{
-		const usize newLength = Length + length;
-		if (newLength > Capacity)
-		{
-			Grow((Capacity + length) * 2);
-		}
-		Platform::MemoryCopy(Buffer + Length, view.GetData(), length);
-		Length = newLength;
-	}
-
 	void Append(StringView view)
 	{
-		Append(view, view.GetLength());
+		const usize newLength = Length + view.GetLength();
+		if (newLength > Capacity)
+		{
+			Grow((Capacity + view.GetLength()) * 2);
+		}
+		Platform::MemoryCopy(Buffer + Length, view.GetData(), view.GetLength());
+		Length = newLength;
 	}
 
 	void Reserve(usize capacity)
