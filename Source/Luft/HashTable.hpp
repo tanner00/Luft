@@ -336,14 +336,14 @@ public:
 		return HashTableIterator<BucketArray, Pair>(Buckets, 0, 0);
 	}
 
-	HashTableIterator<BucketArray, const Pair> begin() const
+	HashTableIterator<const BucketArray, const Pair> begin() const
 	{
-		return HashTableIterator<BucketArray, const Pair>(Buckets, ValueCount, FindFirstUsedBucket());
+		return HashTableIterator<const BucketArray, const Pair>(Buckets, ValueCount, FindFirstUsedBucket());
 	}
 
-	HashTableIterator<BucketArray, const Pair> end() const
+	HashTableIterator<const BucketArray, const Pair> end() const
 	{
-		return HashTableIterator<BucketArray, const Pair>(Buckets, 0, 0);
+		return HashTableIterator<const BucketArray, const Pair>(Buckets, 0, 0);
 	}
 
 private:
