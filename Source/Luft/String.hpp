@@ -103,7 +103,14 @@ inline StringView operator ""_view(const char* literal, usize length) noexcept
 class String final : public StringView
 {
 public:
-	explicit String(Allocator* allocator = &GlobalAllocator::Get())
+	String()
+		: StringView(nullptr, 0)
+		, Capacity(0)
+		, Allocator(&GlobalAllocator::Get())
+	{
+	}
+
+	explicit String(Allocator* allocator)
 		: StringView(nullptr, 0)
 		, Capacity(0)
 		, Allocator(allocator)

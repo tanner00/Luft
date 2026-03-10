@@ -143,7 +143,14 @@ template<typename T>
 class Array final : public ArrayView<T>
 {
 public:
-	explicit Array(Allocator* allocator = &GlobalAllocator::Get())
+	Array()
+		: ArrayView<T>(nullptr, 0)
+		, Capacity(0)
+		, Allocator(&GlobalAllocator::Get())
+	{
+	}
+
+	explicit Array(Allocator* allocator)
 		: ArrayView<T>()
 		, Capacity(0)
 		, Allocator(allocator)
