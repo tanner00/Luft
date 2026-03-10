@@ -243,7 +243,7 @@ public:
 
 		if constexpr (IsSame<RemoveCvType<InputK>, StringView>::Value)
 		{
-			bucket.Add({ String { key }, {} });
+			bucket.Add({ String(key, Allocator), {} });
 		}
 		else
 		{
