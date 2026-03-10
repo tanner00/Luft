@@ -42,7 +42,7 @@ public:
 	{
 	}
 
-	ArrayView(std::initializer_list<T> elements) requires IsConst<T>::Value
+	ArrayView(std::initializer_list<T> elements)
 		: Elements(elements.begin())
 		, Length(elements.size())
 	{
@@ -163,6 +163,15 @@ public:
 		, Allocator(allocator)
 	{
 		this->Elements = Capacity ? static_cast<T*>(Allocator->Allocate(Capacity * sizeof(T))) : nullptr;
+	}
+
+	Array(std::initializer_list<T> elements)
+		: Array(elements.size())
+	{
+		for (const T& element : elements)
+		{
+			Add(element);
+		}
 	}
 
 	~Array()
