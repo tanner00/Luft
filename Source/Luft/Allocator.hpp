@@ -26,7 +26,7 @@ public:
 	T* Create(Args&&... args)
 	{
 		T* object = static_cast<T*>(Allocate(sizeof(T)));
-		object = new (object, LuftNewMarker {}) T { Forward<Args>(args)... };
+		object = new (object, LuftNewMarker {}) T (Forward<Args>(args)...);
 		return object;
 	}
 
