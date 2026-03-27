@@ -1,9 +1,8 @@
-﻿#pragma once
+#pragma once
 
 #include "Allocator.hpp"
 #include "Error.hpp"
-#include "Base.hpp"
-#include "Platform.hpp"
+#include "PlatformCore.hpp"
 
 class StringView
 {

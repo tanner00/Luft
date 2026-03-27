@@ -1,5 +1,5 @@
-﻿#include "Allocator.hpp"
-#include "Platform.hpp"
+#include "Allocator.hpp"
+#include "PlatformCore.hpp"
 
 void* GlobalAllocator::Allocate(usize size)
 {

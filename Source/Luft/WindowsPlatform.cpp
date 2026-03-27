@@ -8,8 +8,8 @@
 #include "Error.hpp"
 #include "HashTable.hpp"
 #include "Platform.hpp"
+#include "Windows.hpp"
 
-#undef UNICODE
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -17,21 +17,12 @@
 
 #include <stdio.h>
 
-static bool NoOpMessageHandler(void*, uint32, uint64, uint64)
+namespace Platform
 {
-	return false;
-}
 
-static void NoOpResizeHandler(Platform::Window*)
-{
-}
-
-static Platform::MessageHandler MessageHandlerOverride = NoOpMessageHandler;
-static Platform::ResizeHandler ResizeHandlerOverride = NoOpResizeHandler;
+static uint64 Frequency = 0;
 
 static bool QuitRequested = false;
-
-static uint64 Frequency;
 
 static HashTable<uint16, Key> WindowsKeyMap(32, &GlobalAllocator::Get());
 static bool KeyPressed[static_cast<usize>(Key::Count)] = {};
@@ -45,63 +36,42 @@ static int32 MouseY = 0;
 
 static InputMode CurrentInputMode = InputMode::Default;
 
-bool IsKeyPressed(Key key)
-{
-	CHECK(key != Key::Count);
-	return KeyPressed[static_cast<usize>(key)];
-}
-
-bool IsKeyPressedOnce(Key key)
-{
-	CHECK(key != Key::Count);
-	return KeyPressedOnce[static_cast<usize>(key)];
-}
-
-bool IsMouseButtonPressed(MouseButton button)
-{
-	CHECK(button != MouseButton::Count);
-	return MouseButtonPressed[static_cast<usize>(button)];
-}
-
-bool IsMouseButtonPressedOnce(MouseButton button)
-{
-	CHECK(button != MouseButton::Count);
-	return MouseButtonPressedOnce[static_cast<usize>(button)];
-}
-
-int32 GetMouseX()
-{
-	return MouseX;
-}
-
-int32 GetMouseY()
-{
-	return MouseY;
-}
-
-namespace Platform
-{
+static MessageHandler MessageHandlerOverride = [](void*, uint32, uint64, uint64) -> bool { return false; };
+static ResizeHandler ResizeHandlerOverride = [](Window*) -> void {};
 
 void MemorySet(void* destination, uint8 value, usize size)
 {
+	if (size == 0)
+	{
+		return;
+	}
+
+	CHECK(destination);
 	memset(destination, value, size);
 }
 
 void MemoryCopy(void* destination, const void* source, usize size)
 {
+	if (size == 0)
+	{
+		return;
+	}
+
+	CHECK(destination);
+	CHECK(source);
 	memcpy(destination, source, size);
 }
 
 void MemoryMove(void* destination, const void* source, usize size)
 {
-	memmove(destination, source, size);
-}
+	if (size == 0)
+	{
+		return;
+	}
 
-bool StringCompare(const char* a, usize aLength, const char* b, usize bLength)
-{
-	const usize maxLength = aLength > bLength ? aLength : bLength;
-	const bool areEqual = strncmp(a, b, maxLength) == 0;
-	return areEqual;
+	CHECK(destination);
+	CHECK(source);
+	memmove(destination, source, size);
 }
 
 void* Allocate(usize size)
@@ -121,13 +91,23 @@ void Deallocate(void* ptr)
 	CHECK(result);
 }
 
+bool StringCompare(const char* a, usize aLength, const char* b, usize bLength)
+{
+	const bool areEqual = strncmp(a, b, aLength > bLength ? bLength : aLength) == 0;
+	return areEqual;
+}
+
 usize StringLength(const char* string0)
 {
+	CHECK(string0);
 	return strlen(string0);
 }
 
 void StringPrint(const char* format0, char* buffer, usize bufferSize, ...)
 {
+	CHECK(format0);
+	CHECK(buffer);
+
 	va_list args;
 	va_start(args, bufferSize);
 	const int32 result = vsnprintf(buffer, bufferSize, format0, args);
@@ -135,66 +115,71 @@ void StringPrint(const char* format0, char* buffer, usize bufferSize, ...)
 	va_end(args);
 }
 
+void FatalError(const char* errorMessage0)
+{
+	CHECK(errorMessage0);
+	const Array<wchar_t> errorMessageWide = Windows::UTF8ToWide(StringView(errorMessage0, StringLength(errorMessage0)));
+	CHECK(MessageBoxW(nullptr, errorMessageWide.GetData(), L"Fatal Error!", MB_ICONERROR));
+	ExitProcess(1);
+}
+
 void Log(const char* message0)
 {
-	OutputDebugStringA(message0);
+	CHECK(message0);
+	const Array<wchar_t> messageWide = Windows::UTF8ToWide(StringView(message0, StringLength(message0)));
+	OutputDebugStringW(messageWide.GetData());
 }
 
 void LogFormatted(const char* format0, ...)
 {
-	char logBuffer[4096];
+	CHECK(format0);
+
+	char buffer[4096];
 
 	va_list args;
 	va_start(args, format0);
-	const int32 result = vsnprintf(logBuffer, sizeof(logBuffer), format0, args);
+	const int32 result = vsnprintf(buffer, sizeof(buffer), format0, args);
 	CHECK(result);
 	va_end(args);
 
-	Log(logBuffer);
+	Log(buffer);
 }
 
-uint8* ReadEntireFile(const char* filePath, usize filePathSize, usize* outSize, Allocator& allocator)
+uint8* ReadEntireFile(StringView filePath, usize* outSize, Allocator* allocator)
 {
 	CHECK(outSize);
+	CHECK(allocator);
 
-	char filePath0[MAX_PATH] = {};
-	VERIFY(filePathSize + 1 <= sizeof(filePath0), "File path exceeds length limit!");
-	MemoryCopy(filePath0, filePath, filePathSize);
+	const Array<wchar_t> filePathWide = Windows::UTF8ToWide(filePath);
 
-	const DWORD fileAttributes = GetFileAttributesA(filePath0);
+	const uint64 fileAttributes = GetFileAttributesW(filePathWide.GetData());
 	const bool fileExists = fileAttributes != INVALID_FILE_ATTRIBUTES && !(fileAttributes & FILE_ATTRIBUTE_DIRECTORY);
 	VERIFY(fileExists, "Attempted to open a file that doesn't exist!");
 
-	const HANDLE file = CreateFileA(filePath0, GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
+	const HANDLE file = CreateFileW(filePathWide.GetData(), GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
 	VERIFY(file, "Failed to open file!");
 
 	LARGE_INTEGER fileSize = {};
-	CHECK(SUCCEEDED(GetFileSizeEx(file, &fileSize)));
+	CHECK(GetFileSizeEx(file, &fileSize));
 	CHECK(fileSize.HighPart == 0);
 	*outSize = fileSize.LowPart;
 
-	uint8* fileData = static_cast<uint8*>(allocator.Allocate(fileSize.LowPart));
+	uint8* fileData = static_cast<uint8*>(allocator->Allocate(fileSize.LowPart));
 	CHECK(fileData);
 
 	DWORD readSize = 0;
-	CHECK(SUCCEEDED(ReadFile(file, fileData, fileSize.LowPart, &readSize, nullptr)));
+	CHECK(ReadFile(file, fileData, fileSize.LowPart, &readSize, nullptr));
 	VERIFY(fileSize.LowPart == readSize, "Failed to read entire file!");
 
-	CHECK(SUCCEEDED(CloseHandle(file)));
+	CHECK(CloseHandle(file));
 	return fileData;
 }
 
 double GetTime()
 {
 	uint64 time;
-	CHECK(SUCCEEDED(QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(&time))));
+	CHECK(QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(&time)));
 	return static_cast<double>(time) / static_cast<double>(Frequency);
-}
-
-void FatalError(const char* errorMessage0)
-{
-	MessageBoxA(nullptr, errorMessage0, "Fatal Error!", MB_ICONERROR);
-	ExitProcess(1);
 }
 
 bool IsQuitRequested()
@@ -214,7 +199,7 @@ void ProcessEvents()
 	}
 
 	MSG msg;
-	while (PeekMessageA(&msg, nullptr, 0, 0, PM_REMOVE))
+	while (PeekMessageW(&msg, nullptr, 0, 0, PM_REMOVE))
 	{
 		if (msg.message == WM_QUIT)
 		{
@@ -222,7 +207,7 @@ void ProcessEvents()
 		}
 
 		TranslateMessage(&msg);
-		DispatchMessageA(&msg);
+		DispatchMessageW(&msg);
 	}
 }
 
@@ -240,7 +225,7 @@ static LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPA
 		return 0;
 	case WM_SIZE:
 	{
-		Window* userWindow = reinterpret_cast<Window*>(GetWindowLongPtrA(window, 0));
+		Window* userWindow = reinterpret_cast<Window*>(GetWindowLongPtrW(window, GWLP_USERDATA));
 		CHECK(userWindow);
 		userWindow->DrawWidth = LOWORD(lParam);
 		userWindow->DrawHeight = HIWORD(lParam);
@@ -314,7 +299,7 @@ static LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPA
 
 		if (CurrentInputMode == InputMode::Captured)
 		{
-			const Window* userWindow = reinterpret_cast<Window*>(GetWindowLongPtrA(window, 0));
+			const Window* userWindow = reinterpret_cast<Window*>(GetWindowLongPtrW(window, GWLP_USERDATA));
 
 			POINT centerScreenPosition =
 			{
@@ -325,8 +310,8 @@ static LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPA
 			MouseX -= centerScreenPosition.x;
 			MouseY -= centerScreenPosition.y;
 
-			ClientToScreen(window, &centerScreenPosition);
-			SetCursorPos(centerScreenPosition.x, centerScreenPosition.y);
+			CHECK(ClientToScreen(window, &centerScreenPosition));
+			CHECK(SetCursorPos(centerScreenPosition.x, centerScreenPosition.y));
 		}
 		return 0;
 	}
@@ -337,47 +322,55 @@ static LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPA
 		MemorySet(MouseButtonPressedOnce, false, sizeof(MouseButtonPressedOnce));
 		return 0;
 	}
-	return DefWindowProcA(window, message, wParam, lParam);
+	return DefWindowProcW(window, message, wParam, lParam);
 }
 
-Window* CreateWindow(const char* name, uint32 drawWidth, uint32 drawHeight)
+Window* CreateWindow(StringView title, uint32 drawWidth, uint32 drawHeight)
 {
-	BOOL result = SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+	bool result = SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 	CHECK(result);
 
-	const HMODULE instance = GetModuleHandleA(nullptr);
+	const HMODULE instance = GetModuleHandleW(nullptr);
 
-	const usize windowClassNameLength = StringLength(name) + (sizeof(" Window Class") - 1) + (sizeof('\0') - 1) + 1;
-	char* windowClassName = static_cast<char*>(GlobalAllocator::Get().Allocate(windowClassNameLength));
-	StringPrint("%s Window Class", windowClassName, windowClassNameLength, name);
+	String className(&GlobalAllocator::Get());
+	className.Append(title);
+	className.Append(" Window Class"_view);
 
-	const WNDCLASSEXA windowClass =
+	const Array<wchar_t> classNameWide = Windows::UTF8ToWide(className);
+	wchar_t* classNamePersistentWide = static_cast<wchar_t*>(GlobalAllocator::Get().Allocate(classNameWide.GetDataSize()));
+	MemoryCopy(classNamePersistentWide, classNameWide.GetData(), classNameWide.GetDataSize());
+
+	const WNDCLASSEXW windowClass =
 	{
 		.cbSize = sizeof(windowClass),
 		.lpfnWndProc = WindowProc,
 		.cbWndExtra = sizeof(Window*),
 		.hInstance = instance,
-		.hIcon = LoadIconA(nullptr, IDI_APPLICATION),
-		.hCursor = LoadCursorA(nullptr, IDC_ARROW),
+		.hIcon = LoadIconW(nullptr, IDI_APPLICATION),
+		.hCursor = LoadCursorW(nullptr, IDC_ARROW),
 		.hbrBackground = static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH)),
-		.lpszClassName = windowClassName,
+		.lpszClassName = classNamePersistentWide,
 	};
-	const ATOM atom = RegisterClassExA(&windowClass);
+	const ATOM atom = RegisterClassExW(&windowClass);
 	CHECK(atom);
 
 	static constexpr DWORD exStyle = WS_EX_APPWINDOW;
 	static constexpr DWORD style = WS_OVERLAPPEDWINDOW;
 
 	RECT windowRectangle = { 0, 0, static_cast<int32>(drawWidth), static_cast<int32>(drawHeight) };
-	AdjustWindowRectExForDpi(&windowRectangle, style, FALSE, exStyle, GetDpiForSystem());
+	AdjustWindowRectExForDpi(&windowRectangle, style, false, exStyle, GetDpiForSystem());
 
-	const HWND window = CreateWindowExA(exStyle, windowClass.lpszClassName, name, style,
+	const Array<wchar_t> titleWide = Windows::UTF8ToWide(title);
+	const HWND window = CreateWindowExW(exStyle, windowClass.lpszClassName, titleWide.GetData(), style,
 										0, 0, windowRectangle.right - windowRectangle.left, windowRectangle.bottom - windowRectangle.top,
 										nullptr, nullptr, instance, nullptr);
 	CHECK(window);
 
-	Window* userWindow = GlobalAllocator::Get().Create<Window>(window, windowClassName, drawWidth, drawHeight);
-	CHECK(SUCCEEDED(SetWindowLongPtrA(window, 0, reinterpret_cast<int64>(userWindow))));
+	Window* userWindow = GlobalAllocator::Get().Create<Window>(window, classNamePersistentWide, drawWidth, drawHeight);
+
+	SetLastError(0);
+	SetWindowLongPtrW(window, GWLP_USERDATA, reinterpret_cast<uint64>(userWindow));
+	CHECK(GetLastError() == 0);
 
 	const HMONITOR monitor = MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST);
 	CHECK(monitor);
@@ -385,7 +378,7 @@ Window* CreateWindow(const char* name, uint32 drawWidth, uint32 drawHeight)
 	{
 		.cbSize = sizeof(monitorInfo),
 	};
-	result = GetMonitorInfoA(monitor, &monitorInfo);
+	result = GetMonitorInfoW(monitor, &monitorInfo);
 	CHECK(result);
 	const int32 windowPositionX = (monitorInfo.rcWork.left + monitorInfo.rcWork.right) / 2 - static_cast<int32>(drawWidth) / 2;
 	const int32 windowPositionY = (monitorInfo.rcWork.top + monitorInfo.rcWork.bottom) / 2 - static_cast<int32>(drawHeight) / 2;
@@ -397,8 +390,9 @@ Window* CreateWindow(const char* name, uint32 drawWidth, uint32 drawHeight)
 void DestroyWindow(Window* window)
 {
 	DestroyWindow(static_cast<HWND>(window->Handle));
-	UnregisterClassA(static_cast<char*>(window->OsExtra), GetModuleHandleA(nullptr));
-	GlobalAllocator::Get().Deallocate(window->OsExtra, strlen(static_cast<char*>(window->OsExtra)) + 1);
+	const wchar_t* classNameWide = static_cast<wchar_t*>(window->OSExtra);
+	UnregisterClassW(classNameWide, GetModuleHandleW(nullptr));
+	GlobalAllocator::Get().Deallocate(window->OSExtra, wcslen(classNameWide) * sizeof(wchar_t) + sizeof(L'\0'));
 	GlobalAllocator::Get().Destroy(window);
 }
 
@@ -407,14 +401,49 @@ void ShowWindow(const Window* window)
 	ShowWindow(static_cast<HWND>(window->Handle), SW_SHOWNORMAL);
 }
 
-void SetWindowTitle(const Window* window, const char* title)
+void SetWindowTitle(const Window* window, StringView title)
 {
-	SetWindowTextA(static_cast<HWND>(window->Handle), title);
+	const Array<wchar_t> titleWide = Windows::UTF8ToWide(title);
+	CHECK(SetWindowTextW(static_cast<HWND>(window->Handle), titleWide.GetData()));
 }
 
 bool IsWindowFocused(const Window* window)
 {
 	return GetActiveWindow() == static_cast<HWND>(window->Handle);
+}
+
+bool IsKeyPressed(Key key)
+{
+	CHECK(key != Key::Count);
+	return KeyPressed[static_cast<usize>(key)];
+}
+
+bool IsKeyPressedOnce(Key key)
+{
+	CHECK(key != Key::Count);
+	return KeyPressedOnce[static_cast<usize>(key)];
+}
+
+bool IsMouseButtonPressed(MouseButton button)
+{
+	CHECK(button != MouseButton::Count);
+	return MouseButtonPressed[static_cast<usize>(button)];
+}
+
+bool IsMouseButtonPressedOnce(MouseButton button)
+{
+	CHECK(button != MouseButton::Count);
+	return MouseButtonPressedOnce[static_cast<usize>(button)];
+}
+
+int32 GetMouseX()
+{
+	return MouseX;
+}
+
+int32 GetMouseY()
+{
+	return MouseY;
 }
 
 InputMode GetInputMode()
@@ -433,7 +462,7 @@ void SetInputMode(const Window* window, InputMode mode)
 	{
 	case InputMode::Default:
 	{
-		ClipCursor(nullptr);
+		CHECK(ClipCursor(nullptr));
 		ShowCursor(true);
 		break;
 	}
@@ -442,16 +471,16 @@ void SetInputMode(const Window* window, InputMode mode)
 		const HWND nativeWindow = static_cast<HWND>(window->Handle);
 
 		RECT screenRectangle;
-		GetClientRect(nativeWindow, &screenRectangle);
-		ClientToScreen(nativeWindow, reinterpret_cast<POINT*>(&screenRectangle.left));
-		ClientToScreen(nativeWindow, reinterpret_cast<POINT*>(&screenRectangle.right));
-		ClipCursor(&screenRectangle);
+		CHECK(GetClientRect(nativeWindow, &screenRectangle));
+		CHECK(ClientToScreen(nativeWindow, reinterpret_cast<POINT*>(&screenRectangle.left)));
+		CHECK(ClientToScreen(nativeWindow, reinterpret_cast<POINT*>(&screenRectangle.right)));
+		CHECK(ClipCursor(&screenRectangle));
 
 		ShowCursor(false);
 
 		const int32 screenCenterX = (screenRectangle.left + screenRectangle.right) / 2;
 		const int32 screenCenterY = (screenRectangle.top + screenRectangle.bottom) / 2;
-		SetCursorPos(screenCenterX, screenCenterY);
+		CHECK(SetCursorPos(screenCenterX, screenCenterY));
 
 		MouseX = 0;
 		MouseY = 0;
@@ -479,25 +508,25 @@ extern void Start();
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
-	CHECK(SUCCEEDED(QueryPerformanceFrequency(reinterpret_cast<LARGE_INTEGER*>(&Frequency))));
+	CHECK(QueryPerformanceFrequency(reinterpret_cast<LARGE_INTEGER*>(&Platform::Frequency)));
 
 	for (uint16 c = '0'; c <= '9'; ++c)
 	{
-		WindowsKeyMap.Add(c, static_cast<Key>(c - '0'));
+		Platform::WindowsKeyMap.Add(c, static_cast<Platform::Key>(c - '0'));
 	}
 	for (uint16 c = 'A'; c <= 'Z'; ++c)
 	{
-		WindowsKeyMap.Add(c, static_cast<Key>(c - 'A' + static_cast<usize>(Key::A)));
+		Platform::WindowsKeyMap.Add(c, static_cast<Platform::Key>(c - 'A' + static_cast<usize>(Platform::Key::A)));
 	}
-	WindowsKeyMap.Add(VK_LEFT, Key::Left);
-	WindowsKeyMap.Add(VK_RIGHT, Key::Right);
-	WindowsKeyMap.Add(VK_UP, Key::Up);
-	WindowsKeyMap.Add(VK_DOWN, Key::Down);
-	WindowsKeyMap.Add(VK_ESCAPE, Key::Escape);
-	WindowsKeyMap.Add(VK_BACK, Key::Backspace);
-	WindowsKeyMap.Add(VK_SPACE, Key::Space);
-	WindowsKeyMap.Add(VK_RETURN, Key::Enter);
-	WindowsKeyMap.Add(VK_SHIFT, Key::Shift);
+	Platform::WindowsKeyMap.Add(VK_LEFT, Platform::Key::Left);
+	Platform::WindowsKeyMap.Add(VK_RIGHT, Platform::Key::Right);
+	Platform::WindowsKeyMap.Add(VK_UP, Platform::Key::Up);
+	Platform::WindowsKeyMap.Add(VK_DOWN, Platform::Key::Down);
+	Platform::WindowsKeyMap.Add(VK_ESCAPE, Platform::Key::Escape);
+	Platform::WindowsKeyMap.Add(VK_BACK, Platform::Key::Backspace);
+	Platform::WindowsKeyMap.Add(VK_SPACE, Platform::Key::Space);
+	Platform::WindowsKeyMap.Add(VK_RETURN, Platform::Key::Enter);
+	Platform::WindowsKeyMap.Add(VK_SHIFT, Platform::Key::Shift);
 
 	const usize startingUsed = GlobalAllocator::Get().GetUsed();
 

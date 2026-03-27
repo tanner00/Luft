@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Platform.hpp"
+#include "PlatformCore.hpp"
 
 #if DEBUG
 #define CHECK(condition) do { if (!(condition)) { BREAK_IN_DEBUGGER(); } } while (0)
