@@ -41,14 +41,9 @@ public:
 		return *this;
 	}
 
-	bool operator==(const HashTableIterator& b)
+	bool operator==(const HashTableIterator& b) const
 	{
-		return ValueCount == b.ValueCount && &Buckets == &Buckets;
-	}
-
-	bool operator!=(const HashTableIterator& b)
-	{
-		return ValueCount != b.ValueCount || &Buckets != &Buckets;
+		return ValueCount == b.ValueCount && &Buckets == &b.Buckets;
 	}
 
 private:
@@ -62,7 +57,7 @@ template<typename K, typename InputK>
 concept IsValidHashTableKey = IsSame<RemoveCvType<InputK>, K>::Value || (IsSame<K, String>::Value && IsSame<RemoveCvType<InputK>, StringView>::Value);
 
 template<typename Pair, typename K, typename InputK>
-usize FindPairIndex(const Array<Pair>& bucket, const InputK& key) requires IsValidHashTableKey<K, InputK>
+usize FindPairIndex(ArrayView<Pair> bucket, const InputK& key) requires IsValidHashTableKey<K, InputK>
 {
 	usize index = INDEX_NONE;
 	for (usize i = 0; i < bucket.GetLength(); ++i)
@@ -100,7 +95,7 @@ public:
 		, Allocator(allocator)
 	{
 		CHECK(bucketCount > 0);
-		new (&Buckets, LuftNewMarker {}) BucketArray (bucketCount, Allocator);
+		new (&Buckets, LuftNewMarker {}) BucketArray(bucketCount, Allocator);
 		for (usize i = 0; i < bucketCount; ++i)
 		{
 			Buckets.Emplace(Allocator);
@@ -122,7 +117,7 @@ public:
 		: ValueCount(copy.ValueCount)
 		, Allocator(copy.Allocator)
 	{
-		new (&Buckets, LuftNewMarker {}) BucketArray (copy.Buckets.GetLength(), Allocator);
+		new (&Buckets, LuftNewMarker {}) BucketArray(copy.Buckets.GetLength(), Allocator);
 		for (usize i = 0; i < copy.Buckets.GetLength(); ++i)
 		{
 			Buckets.Add(copy.Buckets[i]);
@@ -141,7 +136,7 @@ public:
 		ValueCount = copy.ValueCount;
 		Allocator = copy.Allocator;
 
-		new (&Buckets, LuftNewMarker {}) BucketArray (copy.Buckets.GetLength(), Allocator);
+		new (&Buckets, LuftNewMarker {}) BucketArray(copy.Buckets.GetLength(), Allocator);
 		for (usize i = 0; i < copy.Buckets.GetLength(); ++i)
 		{
 			Buckets.Add(copy.Buckets[i]);
@@ -204,7 +199,9 @@ public:
 	bool Contains(const InputK& key) const requires IsValidHashTableKey<K, InputK>
 	{
 		const uint64 bucketIndex = Hash<InputK>{}(key) % Buckets.GetLength();
-		return FindPairIndex<Pair, K, InputK>(Buckets[bucketIndex], key) != INDEX_NONE;
+		const Array<Pair>& bucket = Buckets[bucketIndex];
+
+		return FindPairIndex<Pair, K, InputK>(bucket, key) != INDEX_NONE;
 	}
 
 	template<typename InputK>
@@ -243,11 +240,11 @@ public:
 
 		if constexpr (IsSame<RemoveCvType<InputK>, StringView>::Value)
 		{
-			bucket.Add({ String(key, Allocator), {} });
+			bucket.Add(Pair { String(key, Allocator), {} });
 		}
 		else
 		{
-			bucket.Add({ key, {} });
+			bucket.Add(Pair { key, {} });
 		}
 		++ValueCount;
 
@@ -265,7 +262,7 @@ public:
 			return bucket[index].Value;
 		}
 
-		bucket.Add({ Move(key), {} });
+		bucket.Add(Pair { Move(key), {} });
 		++ValueCount;
 
 		return bucket[bucket.GetLength() - 1].Value;
@@ -276,14 +273,14 @@ public:
 		const uint64 bucketIndex = Hash<K>{}(key) % Buckets.GetLength();
 		Array<Pair>& bucket = Buckets[bucketIndex];
 
-		const usize alreadyExistingIndex = FindPairIndex<Pair, K, K>(Buckets[bucketIndex], key);
-		if (alreadyExistingIndex != INDEX_NONE)
+		const usize index = FindPairIndex<Pair, K, K>(Buckets[bucketIndex], key);
+		if (index != INDEX_NONE)
 		{
-			bucket[alreadyExistingIndex] = { key, value };
+			bucket[index] = Pair { key, value };
 			return false;
 		}
 
-		bucket.Add({ key, value });
+		bucket.Add(Pair { key, value });
 		++ValueCount;
 		return true;
 	}
@@ -293,14 +290,14 @@ public:
 		const uint64 bucketIndex = Hash<K>{}(key) % Buckets.GetLength();
 		Array<Pair>& bucket = Buckets[bucketIndex];
 
-		const usize alreadyExistingIndex = FindPairIndex<Pair, K, K>(Buckets[bucketIndex], key);
-		if (alreadyExistingIndex != INDEX_NONE)
+		const usize index = FindPairIndex<Pair, K, K>(Buckets[bucketIndex], key);
+		if (index != INDEX_NONE)
 		{
-			bucket[alreadyExistingIndex] = { Move(key), Move(value) };
+			bucket[index] = Pair { Move(key), Move(value) };
 			return false;
 		}
 
-		bucket.Add({ Move(key), Move(value) });
+		bucket.Add(Pair { Move(key), Move(value) });
 		++ValueCount;
 		return true;
 	}
