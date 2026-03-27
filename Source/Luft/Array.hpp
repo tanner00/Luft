@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "Allocator.hpp"
 #include "Base.hpp"
@@ -11,19 +11,18 @@ template<typename T>
 class ArrayIterator
 {
 public:
-	explicit ArrayIterator(T* ptr)
-		: Ptr(ptr)
+	explicit ArrayIterator(T* head)
+		: Current(head)
 	{
 	}
 
-	T& operator*() const { return *Ptr; }
-	T* operator->() const { return Ptr; }
-	ArrayIterator& operator++() { ++Ptr; return *this; }
-	bool operator==(const ArrayIterator& b) { return Ptr == b.Ptr; }
-	bool operator!=(const ArrayIterator& b) { return Ptr != b.Ptr; }
+	T& operator*() const { return *Current; }
+	T* operator->() const { return Current; }
+	ArrayIterator& operator++() { ++Current; return *this; }
+	bool operator==(const ArrayIterator& b) const { return Current == b.Current; }
 
 private:
-	T* Ptr;
+	T* Current;
 };
 
 template<typename T>
@@ -36,7 +35,7 @@ public:
 	{
 	}
 
-	ArrayView(T* elements, usize length)
+	ArrayView(const T* elements, usize length)
 		: Elements(elements)
 		, Length(length)
 	{
@@ -48,21 +47,15 @@ public:
 	{
 	}
 
-	static ArrayView Empty()
-	{
-		return ArrayView {};
-	}
-
-	T& operator[](usize index)
-	{
-		CHECK(index < Length);
-		return Elements[index];
-	}
-
 	const T& operator[](usize index) const
 	{
 		CHECK(index < Length);
 		return Elements[index];
+	}
+
+	static ArrayView Empty()
+	{
+		return ArrayView();
 	}
 
 	T& First()
@@ -114,6 +107,323 @@ public:
 		return Length == 0;
 	}
 
+	ArrayIterator<const T> begin() const
+	{
+		return ArrayIterator<const T>(Elements);
+	}
+
+	ArrayIterator<const T> end() const
+	{
+		return ArrayIterator<const T>(Elements + Length);
+	}
+
+private:
+	const T* Elements;
+	usize Length;
+};
+
+template<typename T>
+class Array
+{
+public:
+	Array()
+		: Elements(nullptr)
+		, Length(0)
+		, Capacity(0)
+		, Allocator(&GlobalAllocator::Get())
+	{
+	}
+
+	explicit Array(Allocator* allocator)
+		: Elements(nullptr)
+		, Length(0)
+		, Capacity(0)
+		, Allocator(allocator)
+	{
+	}
+
+	explicit Array(usize capacity, Allocator* allocator = &GlobalAllocator::Get())
+		: Elements(nullptr)
+		, Length(0)
+		, Capacity(capacity)
+		, Allocator(allocator)
+	{
+		if (Capacity)
+		{
+			Elements = static_cast<T*>(Allocator->Allocate(Capacity * sizeof(T)));
+		}
+	}
+
+	Array(std::initializer_list<T> elements)
+		: Array(elements.size())
+	{
+		for (const T& element : elements)
+		{
+			Add(element);
+		}
+	}
+
+	~Array()
+	{
+		if (Allocator)
+		{
+			if constexpr (!IsTriviallyDestructible<T>::Value)
+			{
+				for (usize i = 0; i < Length; ++i)
+				{
+					Elements[i].~T();
+				}
+			}
+			Allocator->Deallocate(Elements, Capacity * sizeof(T));
+		}
+		else
+		{
+			CHECK(Elements == nullptr);
+		}
+
+		Elements = nullptr;
+		Length = 0;
+		Capacity = 0;
+		Allocator = nullptr;
+	}
+
+	Array(const Array& copy)
+		: Elements(nullptr)
+		, Length(copy.Length)
+		, Capacity(copy.Capacity)
+		, Allocator(copy.Allocator)
+	{
+		T* newElements = static_cast<T*>(Allocator->Allocate(Capacity * sizeof(T)));
+		if constexpr (IsTriviallyCopyable<T>::Value)
+		{
+			Platform::MemoryCopy(newElements, copy.Elements, Length * sizeof(T));
+		}
+		else
+		{
+			for (usize i = 0; i < Length; ++i)
+			{
+				new (&newElements[i], LuftNewMarker {}) T(copy.Elements[i]);
+			}
+		}
+		Elements = newElements;
+	}
+
+	Array& operator=(const Array& copy)
+	{
+		if (&copy == this)
+		{
+			return *this;
+		}
+
+		this->~Array();
+
+		Length = copy.Length;
+		Capacity = copy.Capacity;
+		Allocator = copy.Allocator;
+
+		T* newElements = static_cast<T*>(Allocator->Allocate(Capacity * sizeof(T)));
+		if constexpr (IsTriviallyCopyable<T>::Value)
+		{
+			Platform::MemoryCopy(newElements, copy.Elements, Length * sizeof(T));
+		}
+		else
+		{
+			for (usize i = 0; i < Length; ++i)
+			{
+				new (&newElements[i], LuftNewMarker {}) T(copy.Elements[i]);
+			}
+		}
+		Elements = newElements;
+
+		return *this;
+	}
+
+	Array(Array&& move) noexcept
+		: Elements(move.Elements)
+		, Length(move.Length)
+		, Capacity(move.Capacity)
+		, Allocator(move.Allocator)
+	{
+		move.Elements = nullptr;
+		move.Length = 0;
+		move.Capacity = 0;
+		move.Allocator = nullptr;
+	}
+
+	Array& operator=(Array&& move) noexcept
+	{
+		if (&move == this)
+		{
+			return *this;
+		}
+
+		this->~Array();
+
+		Elements = move.Elements;
+		Length = move.Length;
+		Capacity = move.Capacity;
+		Allocator = move.Allocator;
+
+		move.Elements = nullptr;
+		move.Length = 0;
+		move.Capacity = 0;
+		move.Allocator = nullptr;
+
+		return *this;
+	}
+
+	T& operator[](usize index)
+	{
+		CHECK(index < Length);
+		return Elements[index];
+	}
+
+	const T& operator[](usize index) const
+	{
+		CHECK(index < Length);
+		return Elements[index];
+	}
+
+	operator ArrayView<T>() const
+	{
+		return ArrayView<T>(Elements, Length);
+	}
+
+	static Array Empty()
+	{
+		return Array();
+	}
+
+	T& First()
+	{
+		CHECK(!IsEmpty());
+		return Elements[0];
+	}
+
+	const T& First() const
+	{
+		CHECK(!IsEmpty());
+		return Elements[0];
+	}
+
+	T& Last()
+	{
+		CHECK(!IsEmpty());
+		return Elements[Length - 1];
+	}
+
+	const T& Last() const
+	{
+		CHECK(!IsEmpty());
+		return Elements[Length - 1];
+	}
+
+	T* GetData() const
+	{
+		return Elements;
+	}
+
+	usize GetLength() const
+	{
+		return Length;
+	}
+
+	usize GetElementSize() const
+	{
+		return sizeof(T);
+	}
+
+	usize GetDataSize() const
+	{
+		return Length * GetElementSize();
+	}
+
+	bool IsEmpty() const
+	{
+		return Length == 0;
+	}
+
+	void Add(const T& newElement)
+	{
+		Emplace(newElement);
+	}
+
+	void Add(T&& newElement)
+	{
+		Emplace(Move(newElement));
+	}
+
+	template<typename... Args>
+	void Emplace(Args&&... args)
+	{
+		if (Length == Capacity)
+		{
+			const usize doubleCapacity = Capacity * 2;
+			Grow(Capacity ? doubleCapacity : 8);
+		}
+		new (&Elements[Length], LuftNewMarker {}) T(Forward<Args>(args)...);
+		++Length;
+	}
+
+	void AddUninitialized(usize count)
+	{
+		if (Length + count > Capacity)
+		{
+			Grow(Length + count);
+		}
+		Length += count;
+	}
+
+	void Reserve(usize capacity)
+	{
+		CHECK(Elements == nullptr);
+		Capacity = capacity;
+		Elements = static_cast<T*>(Allocator->Allocate(Capacity * sizeof(T)));
+	}
+
+	void Remove(usize index)
+	{
+		CHECK(index < Length);
+
+		if constexpr (IsTriviallyCopyable<T>::Value)
+		{
+			const usize moveLength = Length - index - 1;
+			Platform::MemoryMove(Elements + index, Elements + index + 1, moveLength * sizeof(T));
+		}
+		else
+		{
+			Elements[index].~T();
+			for (usize i = index; i < Length - 1; ++i)
+			{
+				Elements[i] = MoveIfPossible(Elements[i + 1]);
+				Elements[i + 1].~T();
+			}
+		}
+
+		--Length;
+	}
+
+	void Clear()
+	{
+		if constexpr (!IsTriviallyCopyable<T>::Value)
+		{
+			for (usize i = 0; i < Length; ++i)
+			{
+				Elements[i].~T();
+			}
+		}
+		Length = 0;
+	}
+
+	T* Surrender()
+	{
+		T* data = Elements;
+		Elements = nullptr;
+		Length = 0;
+		Capacity = 0;
+		return data;
+	}
+
 	ArrayIterator<T> begin()
 	{
 		return ArrayIterator<T>(Elements);
@@ -134,281 +444,37 @@ public:
 		return ArrayIterator<const T>(Elements + Length);
 	}
 
-protected:
-	T* Elements;
-	usize Length;
-};
-
-template<typename T>
-class Array final : public ArrayView<T>
-{
-public:
-	Array()
-		: ArrayView<T>(nullptr, 0)
-		, Capacity(0)
-		, Allocator(&GlobalAllocator::Get())
-	{
-	}
-
-	explicit Array(Allocator* allocator)
-		: ArrayView<T>()
-		, Capacity(0)
-		, Allocator(allocator)
-	{
-	}
-
-	explicit Array(usize capacity, Allocator* allocator = &GlobalAllocator::Get())
-		: ArrayView<T>()
-		, Capacity(capacity)
-		, Allocator(allocator)
-	{
-		this->Elements = Capacity ? static_cast<T*>(Allocator->Allocate(Capacity * sizeof(T))) : nullptr;
-	}
-
-	Array(std::initializer_list<T> elements)
-		: Array(elements.size())
-	{
-		for (const T& element : elements)
-		{
-			Add(element);
-		}
-	}
-
-	~Array()
-	{
-		if (Allocator)
-		{
-			if constexpr (!IsTriviallyDestructible<T>::Value)
-			{
-				for (usize i = 0; i < this->Length; ++i)
-				{
-					this->Elements[i].~T();
-				}
-			}
-			Allocator->Deallocate(this->Elements, Capacity * sizeof(T));
-		}
-		else
-		{
-			CHECK(this->Elements == nullptr);
-		}
-
-		this->Elements = nullptr;
-		this->Length = 0;
-		Capacity = 0;
-		Allocator = nullptr;
-	}
-
-	Array(const Array& copy)
-		: ArrayView<T>(nullptr, copy.Length)
-		, Capacity(copy.Capacity)
-		, Allocator(copy.Allocator)
-	{
-		T* newElements = static_cast<T*>(Allocator->Allocate(Capacity * sizeof(T)));
-		if constexpr (IsTriviallyCopyable<T>::Value)
-		{
-			Platform::MemoryCopy(newElements, copy.Elements, this->Length * sizeof(T));
-		}
-		else
-		{
-			for (usize i = 0; i < this->Length; ++i)
-			{
-				new (&newElements[i], LuftNewMarker {}) T { copy.Elements[i] };
-			}
-		}
-		this->Elements = newElements;
-	}
-
-	Array& operator=(const Array& copy)
-	{
-		if (&copy == this)
-		{
-			return *this;
-		}
-
-		this->~Array();
-
-		this->Length = copy.Length;
-		Capacity = copy.Capacity;
-		Allocator = copy.Allocator;
-
-		T* newElements = static_cast<T*>(Allocator->Allocate(Capacity * sizeof(T)));
-		if constexpr (IsTriviallyCopyable<T>::Value)
-		{
-			Platform::MemoryCopy(newElements, copy.Elements, this->Length * sizeof(T));
-		}
-		else
-		{
-			for (usize i = 0; i < this->Length; ++i)
-			{
-				new (&newElements[i], LuftNewMarker {}) T { copy.Elements[i] };
-			}
-		}
-		this->Elements = newElements;
-
-		return *this;
-	}
-
-	Array(Array&& move) noexcept
-		: ArrayView<T>(move.Elements, move.Length)
-		, Capacity(move.Capacity)
-		, Allocator(move.Allocator)
-	{
-		move.Elements = nullptr;
-		move.Length = 0;
-		move.Capacity = 0;
-		move.Allocator = nullptr;
-	}
-
-	Array& operator=(Array&& move) noexcept
-	{
-		if (&move == this)
-		{
-			return *this;
-		}
-
-		this->~Array();
-
-		this->Elements = move.Elements;
-		this->Length = move.Length;
-		Capacity = move.Capacity;
-		Allocator = move.Allocator;
-
-		move.Elements = nullptr;
-		move.Length = 0;
-		move.Capacity = 0;
-		move.Allocator = nullptr;
-
-		return *this;
-	}
-
-	ArrayView<T>& AsView()
-	{
-		return *this;
-	}
-
-	const ArrayView<T>& AsView() const
-	{
-		return *this;
-	}
-
-	void Add(const T& newElement)
-	{
-		Emplace(newElement);
-	}
-
-	void Add(T&& newElement)
-	{
-		Emplace(Move(newElement));
-	}
-
-	template<typename... Args>
-	void Emplace(Args&&... args)
-	{
-		if (this->Length == Capacity)
-		{
-			const usize doubleCapacity = Capacity * 2;
-			Grow(Capacity ? doubleCapacity : 8);
-		}
-		new (&this->Elements[this->Length], LuftNewMarker {}) T(Forward<Args>(args)...);
-		++this->Length;
-	}
-
-	void AddUninitialized(usize count)
-	{
-		if (this->Length + count > Capacity)
-		{
-			const usize doubleCapacity = Capacity * 2;
-			Grow((this->Length + count > doubleCapacity) ? (this->Length + count) : doubleCapacity);
-		}
-		this->Length += count;
-	}
-
-	void GrowToLengthUninitialized(usize count)
-	{
-		if (this->Length + count > Capacity)
-		{
-			Grow(this->Length + count);
-		}
-		this->Length = count;
-	}
-
-	void Reserve(usize capacity)
-	{
-		CHECK(this->Elements == nullptr);
-		Capacity = capacity;
-		this->Elements = static_cast<T*>(Allocator->Allocate(Capacity * sizeof(T)));
-	}
-
-	void Remove(usize index)
-	{
-		CHECK(index < this->Length);
-
-		if constexpr (IsTriviallyCopyable<T>::Value)
-		{
-			const usize moveLength = this->Length - index - 1;
-			Platform::MemoryMove(this->Elements + index, this->Elements + index + 1, moveLength * sizeof(T));
-		}
-		else
-		{
-			this->Elements[index].~T();
-			for (usize i = index; i < this->Length - 1; ++i)
-			{
-				this->Elements[i] = MoveIfPossible(this->Elements[i + 1]);
-				this->Elements[i + 1].~T();
-			}
-		}
-
-		--this->Length;
-	}
-
-	void Clear()
-	{
-		if constexpr (!IsTriviallyCopyable<T>::Value)
-		{
-			for (usize i = 0; i < this->Length; ++i)
-			{
-				this->Elements[i].~T();
-			}
-		}
-		this->Length = 0;
-	}
-
-	T* Surrender()
-	{
-		T* data = this->Elements;
-		this->Elements = nullptr;
-		this->Length = 0;
-		Capacity = 0;
-		return data;
-	}
-
 private:
 	void Grow(usize newCapacity)
 	{
+		CHECK(newCapacity >= Capacity);
+
 		const usize newSize = newCapacity * sizeof(T);
 
 		T* resized = static_cast<T*>(Allocator->Allocate(newSize));
 		if constexpr (IsTriviallyCopyable<T>::Value)
 		{
-			Platform::MemoryCopy(resized, this->Elements, this->Length * sizeof(T));
+			Platform::MemoryCopy(resized, Elements, Length * sizeof(T));
 		}
 		else
 		{
-			for (usize i = 0; i < this->Length; ++i)
+			for (usize i = 0; i < Length; ++i)
 			{
-				new (&resized[i], LuftNewMarker {}) T { MoveIfPossible(this->Elements[i]) };
+				new (&resized[i], LuftNewMarker {}) T(MoveIfPossible(Elements[i]));
 			}
-			for (usize i = 0; i < this->Length; ++i)
+			for (usize i = 0; i < Length; ++i)
 			{
-				this->Elements[i].~T();
+				Elements[i].~T();
 			}
 		}
-		Allocator->Deallocate(this->Elements, Capacity * sizeof(T));
+		Allocator->Deallocate(Elements, Capacity * sizeof(T));
 
-		this->Elements = resized;
+		Elements = resized;
 		Capacity = newCapacity;
 	}
 
+	T* Elements;
+	usize Length;
 	usize Capacity;
 	Allocator* Allocator;
 };

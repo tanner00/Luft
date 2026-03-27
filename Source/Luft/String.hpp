@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Allocator.hpp"
+#include "Array.hpp"
 #include "Error.hpp"
 #include "PlatformCore.hpp"
 
@@ -13,18 +14,29 @@ public:
 	{
 	}
 
-	StringView(char* buffer, usize length)
+	StringView(const char* buffer, usize length)
 		: Buffer(buffer)
 		, Length(length)
 	{
 	}
 
-	static StringView Empty()
+	const char& operator[](usize index) const
 	{
-		return StringView {};
+		CHECK(index < Length);
+		return Buffer[index];
 	}
 
-	char* GetData() const
+	bool operator==(StringView b) const
+	{
+		return Platform::StringCompare(Buffer, Length, b.Buffer, b.Length);
+	}
+
+	static StringView Empty()
+	{
+		return StringView();
+	}
+
+	const char* GetData() const
 	{
 		return Buffer;
 	}
@@ -41,11 +53,11 @@ public:
 
 	usize Find(char c) const
 	{
-		for (usize i = 0; i < Length; ++i)
+		for (usize index = 0; index < Length; ++index)
 		{
-			if (Buffer[i] == c)
+			if (Buffer[index] == c)
 			{
-				return i;
+				return index;
 			}
 		}
 		return INDEX_NONE;
@@ -63,73 +75,56 @@ public:
 		return INDEX_NONE;
 	}
 
-	char& operator[](usize index)
-	{
-		CHECK(index < Length);
-		return Buffer[index];
-	}
-
-	const char& operator[](usize index) const
-	{
-		CHECK(index < Length);
-		return Buffer[index];
-	}
-
-	bool operator==(const StringView& b) const
-	{
-		if (Length != b.Length)
-		{
-			return false;
-		}
-		return Platform::StringCompare(Buffer, Length, b.Buffer, b.Length);
-	}
-
-	bool operator!=(const StringView& b) const
-	{
-		return !(*this == b);
-	}
-
-protected:
-	char* Buffer;
+private:
+	const char* Buffer;
 	usize Length;
 };
 
 inline StringView operator ""_view(const char* literal, usize length) noexcept
 {
-	return StringView { const_cast<char*>(literal), length };
+	return StringView { literal, length };
 }
 
-class String final : public StringView
+class String
 {
 public:
 	String()
-		: StringView(nullptr, 0)
+		: Buffer(nullptr)
+		, Length(0)
 		, Capacity(0)
 		, Allocator(&GlobalAllocator::Get())
 	{
 	}
 
 	explicit String(Allocator* allocator)
-		: StringView(nullptr, 0)
+		: Buffer(nullptr)
+		, Length(0)
 		, Capacity(0)
 		, Allocator(allocator)
 	{
+		CHECK(Allocator);
 	}
 
 	explicit String(StringView view, Allocator* allocator = &GlobalAllocator::Get())
-		: StringView(nullptr, view.GetLength())
+		: Buffer(nullptr)
+		, Length(view.GetLength())
 		, Capacity(view.GetLength())
 		, Allocator(allocator)
 	{
-		Buffer = static_cast<char*>(Allocator->Allocate(Capacity));
-		Platform::MemoryCopy(Buffer, view.GetData(), Capacity);
+		CHECK(Allocator);
+
+		Buffer = static_cast<char*>(Allocator->Allocate(Length));
+		Platform::MemoryCopy(Buffer, view.GetData(), Length);
 	}
 
 	explicit String(usize capacity, Allocator* allocator = &GlobalAllocator::Get())
-		: StringView(nullptr, 0)
+		: Buffer(nullptr)
+		, Length(0)
 		, Capacity(capacity)
 		, Allocator(allocator)
 	{
+		CHECK(Allocator);
+
 		Buffer = static_cast<char*>(Allocator->Allocate(Capacity));
 	}
 
@@ -150,7 +145,8 @@ public:
 	}
 
 	String(const String& copy)
-		: StringView(copy)
+		: Buffer(nullptr)
+		, Length(copy.Length)
 		, Capacity(copy.Capacity)
 		, Allocator(copy.Allocator)
 	{
@@ -180,7 +176,8 @@ public:
 	}
 
 	String(String&& move) noexcept
-		: StringView(move)
+		: Buffer(move.Buffer)
+		, Length(move.Length)
 		, Capacity(move.Capacity)
 		, Allocator(move.Allocator)
 	{
@@ -212,14 +209,79 @@ public:
 		return *this;
 	}
 
-	StringView& AsView()
+	char& operator[](usize index)
 	{
-		return *this;
+		CHECK(index < Length);
+		return Buffer[index];
 	}
 
-	const StringView& AsView() const
+	const char& operator[](usize index) const
 	{
-		return *this;
+		CHECK(index < Length);
+		return Buffer[index];
+	}
+
+	bool operator==(const String& b) const
+	{
+		return Platform::StringCompare(Buffer, Length, b.Buffer, b.Length);
+	}
+
+	operator StringView() const
+	{
+		return StringView(Buffer, Length);
+	}
+
+	static String Empty(Allocator* allocator = &GlobalAllocator::Get())
+	{
+		return String(allocator);
+	}
+
+	char* GetData() const
+	{
+		return Buffer;
+	}
+
+	usize GetLength() const
+	{
+		return Length;
+	}
+
+	bool IsEmpty() const
+	{
+		return Length == 0;
+	}
+
+	usize Find(char c) const
+	{
+		for (usize index = 0; index < Length; ++index)
+		{
+			if (Buffer[index] == c)
+			{
+				return index;
+			}
+		}
+		return INDEX_NONE;
+	}
+
+	usize ReverseFind(char c) const
+	{
+		for (usize i = Length - 1; i != INDEX_NONE; --i)
+		{
+			if (Buffer[i] == c)
+			{
+				return i;
+			}
+		}
+		return INDEX_NONE;
+	}
+
+	void AddUninitialized(usize count)
+	{
+		if (Length + count > Capacity)
+		{
+			Grow(Length + count);
+		}
+		Length += count;
 	}
 
 	void Append(char c)
@@ -245,7 +307,7 @@ public:
 
 	void Reserve(usize capacity)
 	{
-		CHECK(IsEmpty());
+		CHECK(Buffer == nullptr);
 		Capacity = capacity;
 		Buffer = static_cast<char*>(Allocator->Allocate(Capacity));
 	}
@@ -255,9 +317,29 @@ public:
 		Length = 0;
 	}
 
+	Array<String> Split(char delimiter, Allocator* allocator = &GlobalAllocator::Get())
+	{
+		CHECK(allocator);
+
+		Array<String> parts(allocator);
+		usize start = 0;
+		for (usize index = 0; index <= Length; ++index)
+		{
+			if (index == Length || Buffer[index] == delimiter)
+			{
+				parts.Add(String(StringView(Buffer + start, index - start), allocator));
+				start = index + 1;
+			}
+		}
+
+		return parts;
+	}
+
 private:
 	void Grow(usize newCapacity)
 	{
+		CHECK(newCapacity >= Capacity);
+
 		char* resized = static_cast<char*>(Allocator->Allocate(newCapacity));
 		Platform::MemoryCopy(resized, Buffer, Length);
 		Allocator->Deallocate(Buffer, Capacity);
@@ -266,6 +348,8 @@ private:
 		Capacity = newCapacity;
 	}
 
+	char* Buffer;
+	usize Length;
 	usize Capacity;
 	Allocator* Allocator;
 };
