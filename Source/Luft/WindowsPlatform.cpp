@@ -2,6 +2,7 @@
 
 #pragma comment(lib, "kernel32")
 #pragma comment(lib, "user32")
+#pragma comment(lib, "shell32")
 
 #include "Allocator.hpp"
 #include "Base.hpp"
@@ -13,6 +14,7 @@
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <shellapi.h>
 #include "WindowsUndefine.hpp"
 
 #include <stdio.h>
@@ -143,6 +145,29 @@ void LogFormatted(const char* format0, ...)
 	va_end(args);
 
 	Log(buffer);
+}
+
+Array<String> GetCommandLineArguments(Allocator* allocator)
+{
+	CHECK(allocator);
+
+	Array<String> result(allocator);
+
+	int32 argumentsCount = 0;
+	wchar_t** arguments = CommandLineToArgvW(GetCommandLineW(), &argumentsCount);
+	if (arguments == nullptr)
+	{
+		return result;
+	}
+
+	for (int32 index = 1; index < argumentsCount; ++index)
+	{
+		result.Add(Windows::WideToUTF8(arguments[index], allocator));
+	}
+
+	CHECK(LocalFree(arguments) == nullptr);
+
+	return result;
 }
 
 uint8* ReadEntireFile(StringView filePath, usize* outSize, Allocator* allocator)

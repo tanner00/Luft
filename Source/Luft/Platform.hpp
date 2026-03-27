@@ -44,6 +44,8 @@ using ResizeHandler = void(*)(Window*);
 void Log(const char* message0);
 void LogFormatted(const char* format0, ...);
 
+Array<String> GetCommandLineArguments(Allocator* allocator = &GlobalAllocator::Get());
+
 uint8* ReadEntireFile(StringView filePath, usize* outSize, Allocator* allocator = &GlobalAllocator::Get());
 
 double GetTime();
