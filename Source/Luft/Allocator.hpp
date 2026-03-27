@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "Base.hpp"
 #include "Meta.hpp"
