@@ -362,7 +362,10 @@ Window* CreateWindow(StringView title, uint32 drawWidth, uint32 drawHeight)
 	className.Append(" Window Class"_view);
 
 	const Array<wchar_t> classNameWide = Windows::UTF8ToWide(className);
-	wchar_t* classNamePersistentWide = static_cast<wchar_t*>(GlobalAllocator::Get().Allocate(classNameWide.GetDataSize()));
+
+	void* native = GlobalAllocator::Get().Allocate(sizeof(HWND) + classNameWide.GetDataSize());
+
+	wchar_t* classNamePersistentWide = reinterpret_cast<wchar_t*>(static_cast<uint8*>(native) + sizeof(HWND));
 	MemoryCopy(classNamePersistentWide, classNameWide.GetData(), classNameWide.GetDataSize());
 
 	const WNDCLASSEXW windowClass =
@@ -390,8 +393,9 @@ Window* CreateWindow(StringView title, uint32 drawWidth, uint32 drawHeight)
 										0, 0, windowRectangle.right - windowRectangle.left, windowRectangle.bottom - windowRectangle.top,
 										nullptr, nullptr, instance, nullptr);
 	CHECK(window);
+	*static_cast<HWND*>(native) = window;
 
-	Window* userWindow = GlobalAllocator::Get().Create<Window>(window, classNamePersistentWide, drawWidth, drawHeight);
+	Window* userWindow = GlobalAllocator::Get().Create<Window>(drawWidth, drawHeight, native);
 
 	SetLastError(0);
 	SetWindowLongPtrW(window, GWLP_USERDATA, reinterpret_cast<uint64>(userWindow));
@@ -414,27 +418,27 @@ Window* CreateWindow(StringView title, uint32 drawWidth, uint32 drawHeight)
 
 void DestroyWindow(Window* window)
 {
-	DestroyWindow(static_cast<HWND>(window->Handle));
-	const wchar_t* classNameWide = static_cast<wchar_t*>(window->OSExtra);
-	UnregisterClassW(classNameWide, GetModuleHandleW(nullptr));
-	GlobalAllocator::Get().Deallocate(window->OSExtra, wcslen(classNameWide) * sizeof(wchar_t) + sizeof(L'\0'));
+	DestroyWindow(*static_cast<HWND*>(window->Native));
+	const wchar_t* classNamePersistentWide = reinterpret_cast<wchar_t*>(static_cast<uint8*>(window->Native) + sizeof(HWND));
+	UnregisterClassW(classNamePersistentWide, GetModuleHandleW(nullptr));
+	GlobalAllocator::Get().Deallocate(window->Native, sizeof(HWND) + wcslen(classNamePersistentWide) * sizeof(wchar_t) + sizeof(L'\0'));
 	GlobalAllocator::Get().Destroy(window);
 }
 
 void ShowWindow(const Window* window)
 {
-	ShowWindow(static_cast<HWND>(window->Handle), SW_SHOWNORMAL);
+	ShowWindow(*static_cast<HWND*>(window->Native), SW_SHOWNORMAL);
 }
 
 void SetWindowTitle(const Window* window, StringView title)
 {
 	const Array<wchar_t> titleWide = Windows::UTF8ToWide(title);
-	CHECK(SetWindowTextW(static_cast<HWND>(window->Handle), titleWide.GetData()));
+	CHECK(SetWindowTextW(*static_cast<HWND*>(window->Native), titleWide.GetData()));
 }
 
 bool IsWindowFocused(const Window* window)
 {
-	return GetActiveWindow() == static_cast<HWND>(window->Handle);
+	return GetActiveWindow() == *static_cast<HWND*>(window->Native);
 }
 
 bool IsKeyPressed(Key key)
@@ -493,7 +497,7 @@ void SetInputMode(const Window* window, InputMode mode)
 	}
 	case InputMode::Captured:
 	{
-		const HWND nativeWindow = static_cast<HWND>(window->Handle);
+		const HWND nativeWindow = *static_cast<HWND*>(window->Native);
 
 		RECT screenRectangle;
 		CHECK(GetClientRect(nativeWindow, &screenRectangle));

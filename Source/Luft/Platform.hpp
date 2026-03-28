@@ -9,11 +9,10 @@ namespace Platform
 
 struct Window
 {
-	void* Handle;
-	void* OSExtra;
-
 	uint32 DrawWidth;
 	uint32 DrawHeight;
+
+	void* Native;
 };
 
 enum class Key : uint8
