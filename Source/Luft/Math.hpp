@@ -37,6 +37,12 @@ T Clamp(T value, T min, T max)
 	return (value > max) ? max : ((value < min) ? min : value);
 }
 
+inline bool IsAlmostEqual(float a, float b, float epsilon)
+{
+	const float difference = a - b;
+	return difference < epsilon && difference > -epsilon;
+}
+
 inline uint64 Power10(uint64 x)
 {
 	uint64 result = 1;
