@@ -54,6 +54,11 @@ inline uint64 NextMultipleOf(uint64 value, uint64 multiple)
 	return (((value - 1) / multiple) + 1) * multiple;
 }
 
+inline bool IsPointInRectangle(float x, float y, float left, float right, float top, float bottom)
+{
+	return x >= left && x <= right && y >= top && y <= bottom;
+}
+
 class Vector
 {
 public:
