@@ -29,6 +29,10 @@ using bool32 = uint32;
 #define UINT32_MAX 4294967295
 #define UINT64_MAX 18446744073709551615
 
+#define FLOAT32_MAX 3.40282e+38f
+#define FLOAT64_MAX 1.79769e+308
+#define INFINITY (FLOAT64_MAX * 2.0)
+
 #define INDEX_NONE (static_cast<usize>(~0))
 
 #define ARRAY_COUNT(a) (sizeof((a)) / sizeof((a)[0]))

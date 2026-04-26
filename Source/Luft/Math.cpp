@@ -1,5 +1,6 @@
 #include "Math.hpp"
 
+#undef INFINITY
 #include <math.h>
 
 float SquareRoot(float x)
