@@ -68,14 +68,14 @@ public:
 	{
 	}
 
-	Vector operator+(const Vector& b) const
+	Vector operator+(const Vector& rhs) const
 	{
-		return Vector { X + b.X, Y + b.Y, Z + b.Z };
+		return Vector { X + rhs.X, Y + rhs.Y, Z + rhs.Z };
 	}
 
-	Vector operator-(const Vector& b) const
+	Vector operator-(const Vector& rhs) const
 	{
-		return Vector { X - b.X, Y - b.Y, Z - b.Z };
+		return Vector { X - rhs.X, Y - rhs.Y, Z - rhs.Z };
 	}
 
 	Vector operator*(float scale) const
@@ -105,18 +105,18 @@ public:
 		return Vector { X / length, Y / length, Z / length };
 	}
 
-	float Dot(const Vector& b) const
+	float Dot(const Vector& rhs) const
 	{
-		return X * b.X + Y * b.Y + Z * b.Z;
+		return X * rhs.X + Y * rhs.Y + Z * rhs.Z;
 	}
 
-	Vector Cross(const Vector& b) const
+	Vector Cross(const Vector& rhs) const
 	{
 		return Vector
 		{
-			Y * b.Z - Z * b.Y,
-			Z * b.X - X * b.Z,
-			X * b.Y - Y * b.X,
+			Y * rhs.Z - Z * rhs.Y,
+			Z * rhs.X - X * rhs.Z,
+			X * rhs.Y - Y * rhs.X,
 		};
 	}
 
@@ -261,51 +261,51 @@ public:
 		return (&M00)[column * Dimension + row];
 	}
 
-	Matrix operator+(const Matrix& b) const
+	Matrix operator+(const Matrix& rhs) const
 	{
 		return Matrix
 		{
-			M00 + b.M00, M10 + b.M10, M20 + b.M20, M30 + b.M30,
-			M01 + b.M01, M11 + b.M11, M21 + b.M21, M31 + b.M31,
-			M02 + b.M02, M12 + b.M12, M22 + b.M22, M32 + b.M32,
-			M03 + b.M03, M13 + b.M13, M23 + b.M23, M33 + b.M33,
+			M00 + rhs.M00, M10 + rhs.M10, M20 + rhs.M20, M30 + rhs.M30,
+			M01 + rhs.M01, M11 + rhs.M11, M21 + rhs.M21, M31 + rhs.M31,
+			M02 + rhs.M02, M12 + rhs.M12, M22 + rhs.M22, M32 + rhs.M32,
+			M03 + rhs.M03, M13 + rhs.M13, M23 + rhs.M23, M33 + rhs.M33,
 		};
 	}
 
-	Matrix operator-(const Matrix& b) const
+	Matrix operator-(const Matrix& rhs) const
 	{
 		return Matrix
 		{
-			M00 - b.M00, M10 - b.M10, M20 - b.M20, M30 - b.M30,
-			M01 - b.M01, M11 - b.M11, M21 - b.M21, M31 - b.M31,
-			M02 - b.M02, M12 - b.M12, M22 - b.M22, M32 - b.M32,
-			M03 - b.M03, M13 - b.M13, M23 - b.M23, M33 - b.M33,
+			M00 - rhs.M00, M10 - rhs.M10, M20 - rhs.M20, M30 - rhs.M30,
+			M01 - rhs.M01, M11 - rhs.M11, M21 - rhs.M21, M31 - rhs.M31,
+			M02 - rhs.M02, M12 - rhs.M12, M22 - rhs.M22, M32 - rhs.M32,
+			M03 - rhs.M03, M13 - rhs.M13, M23 - rhs.M23, M33 - rhs.M33,
 		};
 	}
 
-	Matrix operator*(const Matrix& b) const
+	Matrix operator*(const Matrix& rhs) const
 	{
 		return Matrix
 		{
-			b.M00 * M00 + b.M10 * M01 + b.M20 * M02 + b.M30 * M03,
-			b.M00 * M10 + b.M10 * M11 + b.M20 * M12 + b.M30 * M13,
-			b.M00 * M20 + b.M10 * M21 + b.M20 * M22 + b.M30 * M23,
-			b.M00 * M30 + b.M10 * M31 + b.M20 * M32 + b.M30 * M33,
+			rhs.M00 * M00 + rhs.M10 * M01 + rhs.M20 * M02 + rhs.M30 * M03,
+			rhs.M00 * M10 + rhs.M10 * M11 + rhs.M20 * M12 + rhs.M30 * M13,
+			rhs.M00 * M20 + rhs.M10 * M21 + rhs.M20 * M22 + rhs.M30 * M23,
+			rhs.M00 * M30 + rhs.M10 * M31 + rhs.M20 * M32 + rhs.M30 * M33,
 
-			b.M01 * M00 + b.M11 * M01 + b.M21 * M02 + b.M31 * M03,
-			b.M01 * M10 + b.M11 * M11 + b.M21 * M12 + b.M31 * M13,
-			b.M01 * M20 + b.M11 * M21 + b.M21 * M22 + b.M31 * M23,
-			b.M01 * M30 + b.M11 * M31 + b.M21 * M32 + b.M31 * M33,
+			rhs.M01 * M00 + rhs.M11 * M01 + rhs.M21 * M02 + rhs.M31 * M03,
+			rhs.M01 * M10 + rhs.M11 * M11 + rhs.M21 * M12 + rhs.M31 * M13,
+			rhs.M01 * M20 + rhs.M11 * M21 + rhs.M21 * M22 + rhs.M31 * M23,
+			rhs.M01 * M30 + rhs.M11 * M31 + rhs.M21 * M32 + rhs.M31 * M33,
 
-			b.M02 * M00 + b.M12 * M01 + b.M22 * M02 + b.M32 * M03,
-			b.M02 * M10 + b.M12 * M11 + b.M22 * M12 + b.M32 * M13,
-			b.M02 * M20 + b.M12 * M21 + b.M22 * M22 + b.M32 * M23,
-			b.M02 * M30 + b.M12 * M31 + b.M22 * M32 + b.M32 * M33,
+			rhs.M02 * M00 + rhs.M12 * M01 + rhs.M22 * M02 + rhs.M32 * M03,
+			rhs.M02 * M10 + rhs.M12 * M11 + rhs.M22 * M12 + rhs.M32 * M13,
+			rhs.M02 * M20 + rhs.M12 * M21 + rhs.M22 * M22 + rhs.M32 * M23,
+			rhs.M02 * M30 + rhs.M12 * M31 + rhs.M22 * M32 + rhs.M32 * M33,
 
-			b.M03 * M00 + b.M13 * M01 + b.M23 * M02 + b.M33 * M03,
-			b.M03 * M10 + b.M13 * M11 + b.M23 * M12 + b.M33 * M13,
-			b.M03 * M20 + b.M13 * M21 + b.M23 * M22 + b.M33 * M23,
-			b.M03 * M30 + b.M13 * M31 + b.M23 * M32 + b.M33 * M33,
+			rhs.M03 * M00 + rhs.M13 * M01 + rhs.M23 * M02 + rhs.M33 * M03,
+			rhs.M03 * M10 + rhs.M13 * M11 + rhs.M23 * M12 + rhs.M33 * M13,
+			rhs.M03 * M20 + rhs.M13 * M21 + rhs.M23 * M22 + rhs.M33 * M23,
+			rhs.M03 * M30 + rhs.M13 * M31 + rhs.M23 * M32 + rhs.M33 * M33,
 		};
 	}
 
@@ -320,23 +320,23 @@ public:
 		};
 	}
 
-	Vector Transform(const Vector& b) const
+	Vector Transform(const Vector& rhs) const
 	{
 		return Vector
 		{
-			M00 * b.X + M01 * b.Y + M02 * b.Z + 1.0f * M03,
-			M10 * b.X + M11 * b.Y + M12 * b.Z + 1.0f * M13,
-			M20 * b.X + M21 * b.Y + M22 * b.Z + 1.0f * M23,
+			M00 * rhs.X + M01 * rhs.Y + M02 * rhs.Z + 1.0f * M03,
+			M10 * rhs.X + M11 * rhs.Y + M12 * rhs.Z + 1.0f * M13,
+			M20 * rhs.X + M21 * rhs.Y + M22 * rhs.Z + 1.0f * M23,
 		};
 	}
 
-	Vector TransformDirection(const Vector& b) const
+	Vector TransformDirection(const Vector& rhs) const
 	{
 		return Vector
 		{
-			M00 * b.X + M01 * b.Y + M02 * b.Z,
-			M10 * b.X + M11 * b.Y + M12 * b.Z,
-			M20 * b.X + M21 * b.Y + M22 * b.Z,
+			M00 * rhs.X + M01 * rhs.Y + M02 * rhs.Z,
+			M10 * rhs.X + M11 * rhs.Y + M12 * rhs.Z,
+			M20 * rhs.X + M21 * rhs.Y + M22 * rhs.Z,
 		};
 	}
 
@@ -427,14 +427,14 @@ public:
 		};
 	}
 
-	Quaternion operator*(const Quaternion& b) const
+	Quaternion operator*(const Quaternion& rhs) const
 	{
 		return Quaternion
 		{
-			W * b.X + X * b.W + Y * b.Z - Z * b.Y,
-			W * b.Y - X * b.Z + Y * b.W + Z * b.X,
-			W * b.Z + X * b.Y - Y * b.X + Z * b.W,
-			W * b.W - X * b.X - Y * b.Y - Z * b.Z,
+			W * rhs.X + X * rhs.W + Y * rhs.Z - Z * rhs.Y,
+			W * rhs.Y - X * rhs.Z + Y * rhs.W + Z * rhs.X,
+			W * rhs.Z + X * rhs.Y - Y * rhs.X + Z * rhs.W,
+			W * rhs.W - X * rhs.X - Y * rhs.Y - Z * rhs.Z,
 		};
 	}
 

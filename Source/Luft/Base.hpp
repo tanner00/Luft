@@ -19,7 +19,7 @@ using bool32 = uint32;
 #define INT32_MIN (-2147483647 - 1)
 #define INT64_MIN (-9223372036854775807 - 1)
 
-#define INT8_MAX  127
+#define INT8_MAX 127
 #define INT16_MAX 32767
 #define INT32_MAX 2147483647
 #define INT64_MAX 9223372036854775807
@@ -33,9 +33,9 @@ using bool32 = uint32;
 
 #define ARRAY_COUNT(a) (sizeof((a)) / sizeof((a)[0]))
 
-#define KB(x) ((x) * 1024ULL)
-#define MB(x) (KB(x) * 1024ULL)
-#define GB(x) (MB(x) * 1024ULL)
+#define KB(x) ((x) * 1024ull)
+#define MB(x) (KB(x) * 1024ull)
+#define GB(x) (MB(x) * 1024ull)
 
 #define TOKEN_PASTE_(a, b) a##b
 #define TOKEN_PASTE(a, b) TOKEN_PASTE_(a, b)

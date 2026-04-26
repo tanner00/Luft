@@ -19,7 +19,7 @@ public:
 	T& operator*() const { return *Current; }
 	T* operator->() const { return Current; }
 	ArrayIterator& operator++() { ++Current; return *this; }
-	bool operator==(const ArrayIterator& b) const { return Current == b.Current; }
+	bool operator==(const ArrayIterator& rhs) const { return Current == rhs.Current; }
 
 private:
 	T* Current;
@@ -31,25 +31,25 @@ class ArrayView
 public:
 	ArrayView()
 		: Elements(nullptr)
-		, Length(0)
+		, Count(0)
 	{
 	}
 
-	ArrayView(const T* elements, usize length)
+	ArrayView(const T* elements, usize count)
 		: Elements(elements)
-		, Length(length)
+		, Count(count)
 	{
 	}
 
 	ArrayView(std::initializer_list<T> elements)
 		: Elements(elements.begin())
-		, Length(elements.size())
+		, Count(elements.size())
 	{
 	}
 
 	const T& operator[](usize index) const
 	{
-		CHECK(index < Length);
+		CHECK(index < Count);
 		return Elements[index];
 	}
 
@@ -73,13 +73,13 @@ public:
 	T& Last()
 	{
 		CHECK(!IsEmpty());
-		return Elements[Length - 1];
+		return Elements[Count - 1];
 	}
 
 	const T& Last() const
 	{
 		CHECK(!IsEmpty());
-		return Elements[Length - 1];
+		return Elements[Count - 1];
 	}
 
 	T* GetData() const
@@ -87,9 +87,9 @@ public:
 		return Elements;
 	}
 
-	usize GetLength() const
+	usize GetCount() const
 	{
-		return Length;
+		return Count;
 	}
 
 	usize GetElementSize() const
@@ -99,12 +99,12 @@ public:
 
 	usize GetDataSize() const
 	{
-		return Length * GetElementSize();
+		return Count * GetElementSize();
 	}
 
 	bool IsEmpty() const
 	{
-		return Length == 0;
+		return Count == 0;
 	}
 
 	ArrayIterator<const T> begin() const
@@ -114,12 +114,12 @@ public:
 
 	ArrayIterator<const T> end() const
 	{
-		return ArrayIterator<const T>(Elements + Length);
+		return ArrayIterator<const T>(Elements + Count);
 	}
 
 private:
 	const T* Elements;
-	usize Length;
+	usize Count;
 };
 
 template<typename T>
@@ -128,7 +128,7 @@ class Array
 public:
 	Array()
 		: Elements(nullptr)
-		, Length(0)
+		, Count(0)
 		, Capacity(0)
 		, Allocator(&GlobalAllocator::Get())
 	{
@@ -136,7 +136,7 @@ public:
 
 	explicit Array(Allocator* allocator)
 		: Elements(nullptr)
-		, Length(0)
+		, Count(0)
 		, Capacity(0)
 		, Allocator(allocator)
 	{
@@ -144,7 +144,7 @@ public:
 
 	explicit Array(usize capacity, Allocator* allocator = &GlobalAllocator::Get())
 		: Elements(nullptr)
-		, Length(0)
+		, Count(0)
 		, Capacity(capacity)
 		, Allocator(allocator)
 	{
@@ -169,7 +169,7 @@ public:
 		{
 			if constexpr (!IsTriviallyDestructible<T>::Value)
 			{
-				for (usize i = 0; i < Length; ++i)
+				for (usize i = 0; i < Count; ++i)
 				{
 					Elements[i].~T();
 				}
@@ -182,25 +182,25 @@ public:
 		}
 
 		Elements = nullptr;
-		Length = 0;
+		Count = 0;
 		Capacity = 0;
 		Allocator = nullptr;
 	}
 
 	Array(const Array& copy)
 		: Elements(nullptr)
-		, Length(copy.Length)
+		, Count(copy.Count)
 		, Capacity(copy.Capacity)
 		, Allocator(copy.Allocator)
 	{
 		T* newElements = static_cast<T*>(Allocator->Allocate(Capacity * sizeof(T)));
 		if constexpr (IsTriviallyCopyable<T>::Value)
 		{
-			Platform::MemoryCopy(newElements, copy.Elements, Length * sizeof(T));
+			Platform::MemoryCopy(newElements, copy.Elements, Count * sizeof(T));
 		}
 		else
 		{
-			for (usize i = 0; i < Length; ++i)
+			for (usize i = 0; i < Count; ++i)
 			{
 				new (&newElements[i], LuftNewMarker {}) T(copy.Elements[i]);
 			}
@@ -217,18 +217,18 @@ public:
 
 		this->~Array();
 
-		Length = copy.Length;
+		Count = copy.Count;
 		Capacity = copy.Capacity;
 		Allocator = copy.Allocator;
 
 		T* newElements = static_cast<T*>(Allocator->Allocate(Capacity * sizeof(T)));
 		if constexpr (IsTriviallyCopyable<T>::Value)
 		{
-			Platform::MemoryCopy(newElements, copy.Elements, Length * sizeof(T));
+			Platform::MemoryCopy(newElements, copy.Elements, Count * sizeof(T));
 		}
 		else
 		{
-			for (usize i = 0; i < Length; ++i)
+			for (usize i = 0; i < Count; ++i)
 			{
 				new (&newElements[i], LuftNewMarker {}) T(copy.Elements[i]);
 			}
@@ -240,12 +240,12 @@ public:
 
 	Array(Array&& move) noexcept
 		: Elements(move.Elements)
-		, Length(move.Length)
+		, Count(move.Count)
 		, Capacity(move.Capacity)
 		, Allocator(move.Allocator)
 	{
 		move.Elements = nullptr;
-		move.Length = 0;
+		move.Count = 0;
 		move.Capacity = 0;
 		move.Allocator = nullptr;
 	}
@@ -260,12 +260,12 @@ public:
 		this->~Array();
 
 		Elements = move.Elements;
-		Length = move.Length;
+		Count = move.Count;
 		Capacity = move.Capacity;
 		Allocator = move.Allocator;
 
 		move.Elements = nullptr;
-		move.Length = 0;
+		move.Count = 0;
 		move.Capacity = 0;
 		move.Allocator = nullptr;
 
@@ -274,19 +274,19 @@ public:
 
 	T& operator[](usize index)
 	{
-		CHECK(index < Length);
+		CHECK(index < Count);
 		return Elements[index];
 	}
 
 	const T& operator[](usize index) const
 	{
-		CHECK(index < Length);
+		CHECK(index < Count);
 		return Elements[index];
 	}
 
 	operator ArrayView<T>() const
 	{
-		return ArrayView<T>(Elements, Length);
+		return ArrayView<T>(Elements, Count);
 	}
 
 	static Array Empty()
@@ -309,13 +309,13 @@ public:
 	T& Last()
 	{
 		CHECK(!IsEmpty());
-		return Elements[Length - 1];
+		return Elements[Count - 1];
 	}
 
 	const T& Last() const
 	{
 		CHECK(!IsEmpty());
-		return Elements[Length - 1];
+		return Elements[Count - 1];
 	}
 
 	T* GetData() const
@@ -323,9 +323,9 @@ public:
 		return Elements;
 	}
 
-	usize GetLength() const
+	usize GetCount() const
 	{
-		return Length;
+		return Count;
 	}
 
 	usize GetElementSize() const
@@ -335,12 +335,12 @@ public:
 
 	usize GetDataSize() const
 	{
-		return Length * GetElementSize();
+		return Count * GetElementSize();
 	}
 
 	bool IsEmpty() const
 	{
-		return Length == 0;
+		return Count == 0;
 	}
 
 	void Add(const T& newElement)
@@ -356,70 +356,70 @@ public:
 	template<typename... Args>
 	void Emplace(Args&&... args)
 	{
-		if (Length == Capacity)
+		if (Count == Capacity)
 		{
 			const usize doubleCapacity = Capacity * 2;
 			Grow(Capacity ? doubleCapacity : 8);
 		}
-		new (&Elements[Length], LuftNewMarker {}) T(Forward<Args>(args)...);
-		++Length;
+		new (&Elements[Count], LuftNewMarker {}) T(Forward<Args>(args)...);
+		++Count;
 	}
 
-	void AddUninitialized(usize count)
+	void AddUninitialized(usize newCount)
 	{
-		if (Length + count > Capacity)
+		if (Count + newCount > Capacity)
 		{
-			Grow(Length + count);
+			Grow(Count + newCount);
 		}
-		Length += count;
+		Count += newCount;
 	}
 
-	void Reserve(usize capacity)
+	void Reserve(usize totalCapacity)
 	{
 		CHECK(Elements == nullptr);
-		Capacity = capacity;
+		Capacity = totalCapacity;
 		Elements = static_cast<T*>(Allocator->Allocate(Capacity * sizeof(T)));
 	}
 
 	void Remove(usize index)
 	{
-		CHECK(index < Length);
+		CHECK(index < Count);
 
 		if constexpr (IsTriviallyCopyable<T>::Value)
 		{
-			const usize moveLength = Length - index - 1;
-			Platform::MemoryMove(Elements + index, Elements + index + 1, moveLength * sizeof(T));
+			const usize moveCount = Count - index - 1;
+			Platform::MemoryMove(Elements + index, Elements + index + 1, moveCount * sizeof(T));
 		}
 		else
 		{
 			Elements[index].~T();
-			for (usize i = index; i < Length - 1; ++i)
+			for (usize i = index; i < Count - 1; ++i)
 			{
 				Elements[i] = MoveIfPossible(Elements[i + 1]);
 				Elements[i + 1].~T();
 			}
 		}
 
-		--Length;
+		--Count;
 	}
 
 	void Clear()
 	{
 		if constexpr (!IsTriviallyCopyable<T>::Value)
 		{
-			for (usize i = 0; i < Length; ++i)
+			for (usize i = 0; i < Count; ++i)
 			{
 				Elements[i].~T();
 			}
 		}
-		Length = 0;
+		Count = 0;
 	}
 
 	T* Surrender()
 	{
 		T* data = Elements;
 		Elements = nullptr;
-		Length = 0;
+		Count = 0;
 		Capacity = 0;
 		return data;
 	}
@@ -431,7 +431,7 @@ public:
 
 	ArrayIterator<T> end()
 	{
-		return ArrayIterator<T>(Elements + Length);
+		return ArrayIterator<T>(Elements + Count);
 	}
 
 	ArrayIterator<const T> begin() const
@@ -441,28 +441,28 @@ public:
 
 	ArrayIterator<const T> end() const
 	{
-		return ArrayIterator<const T>(Elements + Length);
+		return ArrayIterator<const T>(Elements + Count);
 	}
 
 private:
-	void Grow(usize newCapacity)
+	void Grow(usize totalCapacity)
 	{
-		CHECK(newCapacity >= Capacity);
+		CHECK(totalCapacity >= Capacity);
 
-		const usize newSize = newCapacity * sizeof(T);
+		const usize totalSize = totalCapacity * sizeof(T);
 
-		T* resized = static_cast<T*>(Allocator->Allocate(newSize));
+		T* resized = static_cast<T*>(Allocator->Allocate(totalSize));
 		if constexpr (IsTriviallyCopyable<T>::Value)
 		{
-			Platform::MemoryCopy(resized, Elements, Length * sizeof(T));
+			Platform::MemoryCopy(resized, Elements, Count * sizeof(T));
 		}
 		else
 		{
-			for (usize i = 0; i < Length; ++i)
+			for (usize i = 0; i < Count; ++i)
 			{
 				new (&resized[i], LuftNewMarker {}) T(MoveIfPossible(Elements[i]));
 			}
-			for (usize i = 0; i < Length; ++i)
+			for (usize i = 0; i < Count; ++i)
 			{
 				Elements[i].~T();
 			}
@@ -470,11 +470,11 @@ private:
 		Allocator->Deallocate(Elements, Capacity * sizeof(T));
 
 		Elements = resized;
-		Capacity = newCapacity;
+		Capacity = totalCapacity;
 	}
 
 	T* Elements;
-	usize Length;
+	usize Count;
 	usize Capacity;
 	Allocator* Allocator;
 };

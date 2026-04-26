@@ -26,7 +26,7 @@ static uint64 Frequency = 0;
 
 static bool QuitRequested = false;
 
-static HashTable<uint16, Key> WindowsKeyMap(32, &GlobalAllocator::Get());
+static HashTable<uint16, Key> KeyMap(32, &GlobalAllocator::Get());
 static bool KeyPressed[static_cast<usize>(Key::Count)] = {};
 static bool KeyPressedOnce[static_cast<usize>(Key::Count)] = {};
 
@@ -260,9 +260,9 @@ static LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPA
 	case WM_KEYDOWN:
 	{
 		const uint16 key = LOWORD(wParam);
-		if (WindowsKeyMap.Contains(key))
+		if (KeyMap.Contains(key))
 		{
-			const usize keyIndex = static_cast<usize>(WindowsKeyMap[key]);
+			const usize keyIndex = static_cast<usize>(KeyMap[key]);
 
 			if (!KeyPressed[keyIndex])
 			{
@@ -275,9 +275,9 @@ static LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPA
 	case WM_KEYUP:
 	{
 		const uint16 key = LOWORD(wParam);
-		if (WindowsKeyMap.Contains(key))
+		if (KeyMap.Contains(key))
 		{
-			const usize keyIndex = static_cast<usize>(WindowsKeyMap[key]);
+			const usize keyIndex = static_cast<usize>(KeyMap[key]);
 			KeyPressed[keyIndex] = false;
 			KeyPressedOnce[keyIndex] = false;
 		}
@@ -352,8 +352,7 @@ static LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPA
 
 Window* CreateWindow(StringView title, uint32 drawWidth, uint32 drawHeight)
 {
-	bool result = SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-	CHECK(result);
+	CHECK(SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2));
 
 	const HMODULE instance = GetModuleHandleW(nullptr);
 
@@ -371,6 +370,7 @@ Window* CreateWindow(StringView title, uint32 drawWidth, uint32 drawHeight)
 	const WNDCLASSEXW windowClass =
 	{
 		.cbSize = sizeof(windowClass),
+		.style = 0,
 		.lpfnWndProc = WindowProc,
 		.cbWndExtra = sizeof(Window*),
 		.hInstance = instance,
@@ -379,14 +379,13 @@ Window* CreateWindow(StringView title, uint32 drawWidth, uint32 drawHeight)
 		.hbrBackground = static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH)),
 		.lpszClassName = classNamePersistentWide,
 	};
-	const ATOM atom = RegisterClassExW(&windowClass);
-	CHECK(atom);
+	CHECK(RegisterClassExW(&windowClass));
 
 	static constexpr DWORD exStyle = WS_EX_APPWINDOW;
 	static constexpr DWORD style = WS_OVERLAPPEDWINDOW;
 
 	RECT windowRectangle = { 0, 0, static_cast<int32>(drawWidth), static_cast<int32>(drawHeight) };
-	AdjustWindowRectExForDpi(&windowRectangle, style, false, exStyle, GetDpiForSystem());
+	CHECK(AdjustWindowRectExForDpi(&windowRectangle, style, false, exStyle, GetDpiForSystem()));
 
 	const Array<wchar_t> titleWide = Windows::UTF8ToWide(title);
 	const HWND window = CreateWindowExW(exStyle, windowClass.lpszClassName, titleWide.GetData(), style,
@@ -407,8 +406,7 @@ Window* CreateWindow(StringView title, uint32 drawWidth, uint32 drawHeight)
 	{
 		.cbSize = sizeof(monitorInfo),
 	};
-	result = GetMonitorInfoW(monitor, &monitorInfo);
-	CHECK(result);
+	CHECK(GetMonitorInfoW(monitor, &monitorInfo));
 	const int32 windowPositionX = (monitorInfo.rcWork.left + monitorInfo.rcWork.right) / 2 - static_cast<int32>(drawWidth) / 2;
 	const int32 windowPositionY = (monitorInfo.rcWork.top + monitorInfo.rcWork.bottom) / 2 - static_cast<int32>(drawHeight) / 2;
 	SetWindowPos(window, nullptr, windowPositionX, windowPositionY, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
@@ -541,21 +539,21 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 	for (uint16 c = '0'; c <= '9'; ++c)
 	{
-		Platform::WindowsKeyMap.Add(c, static_cast<Platform::Key>(c - '0'));
+		Platform::KeyMap.Add(c, static_cast<Platform::Key>(c - '0'));
 	}
 	for (uint16 c = 'A'; c <= 'Z'; ++c)
 	{
-		Platform::WindowsKeyMap.Add(c, static_cast<Platform::Key>(c - 'A' + static_cast<usize>(Platform::Key::A)));
+		Platform::KeyMap.Add(c, static_cast<Platform::Key>(c - 'A' + static_cast<usize>(Platform::Key::A)));
 	}
-	Platform::WindowsKeyMap.Add(VK_LEFT, Platform::Key::Left);
-	Platform::WindowsKeyMap.Add(VK_RIGHT, Platform::Key::Right);
-	Platform::WindowsKeyMap.Add(VK_UP, Platform::Key::Up);
-	Platform::WindowsKeyMap.Add(VK_DOWN, Platform::Key::Down);
-	Platform::WindowsKeyMap.Add(VK_ESCAPE, Platform::Key::Escape);
-	Platform::WindowsKeyMap.Add(VK_BACK, Platform::Key::Backspace);
-	Platform::WindowsKeyMap.Add(VK_SPACE, Platform::Key::Space);
-	Platform::WindowsKeyMap.Add(VK_RETURN, Platform::Key::Enter);
-	Platform::WindowsKeyMap.Add(VK_SHIFT, Platform::Key::Shift);
+	Platform::KeyMap.Add(VK_LEFT, Platform::Key::Left);
+	Platform::KeyMap.Add(VK_RIGHT, Platform::Key::Right);
+	Platform::KeyMap.Add(VK_UP, Platform::Key::Up);
+	Platform::KeyMap.Add(VK_DOWN, Platform::Key::Down);
+	Platform::KeyMap.Add(VK_ESCAPE, Platform::Key::Escape);
+	Platform::KeyMap.Add(VK_BACK, Platform::Key::Backspace);
+	Platform::KeyMap.Add(VK_SPACE, Platform::Key::Space);
+	Platform::KeyMap.Add(VK_RETURN, Platform::Key::Enter);
+	Platform::KeyMap.Add(VK_SHIFT, Platform::Key::Shift);
 
 	const usize startingUsed = GlobalAllocator::Get().GetUsed();
 

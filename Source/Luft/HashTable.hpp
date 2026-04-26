@@ -29,21 +29,21 @@ public:
 	HashTableIterator& operator++()
 	{
 		++IntraBucketIndex;
-		if (IntraBucketIndex == Buckets[InterBucketIndex].GetLength())
+		if (IntraBucketIndex == Buckets[InterBucketIndex].GetCount())
 		{
 			IntraBucketIndex = 0;
 			do
 			{
 				++InterBucketIndex;
-			} while (InterBucketIndex != Buckets.GetLength() && Buckets[InterBucketIndex].IsEmpty());
+			} while (InterBucketIndex != Buckets.GetCount() && Buckets[InterBucketIndex].IsEmpty());
 		}
 		--ValueCount;
 		return *this;
 	}
 
-	bool operator==(const HashTableIterator& b) const
+	bool operator==(const HashTableIterator& rhs) const
 	{
-		return ValueCount == b.ValueCount && &Buckets == &b.Buckets;
+		return ValueCount == rhs.ValueCount && &Buckets == &rhs.Buckets;
 	}
 
 private:
@@ -60,7 +60,7 @@ template<typename Pair, typename K, typename InputK>
 usize FindPairIndex(ArrayView<Pair> bucket, const InputK& key) requires IsValidHashTableKey<K, InputK>
 {
 	usize index = INDEX_NONE;
-	for (usize i = 0; i < bucket.GetLength(); ++i)
+	for (usize i = 0; i < bucket.GetCount(); ++i)
 	{
 		const Pair& currentPair = bucket[i];
 		if (key == currentPair.Key)
@@ -73,9 +73,9 @@ usize FindPairIndex(ArrayView<Pair> bucket, const InputK& key) requires IsValidH
 }
 
 template<typename T>
-concept IsEqualable = requires(T a, T b)
+concept IsEqualable = requires(T lhs, T rhs)
 {
-	a == b;
+	lhs == rhs;
 };
 
 template<typename K, typename V> requires IsEqualable<K> && IsHashable<K, Hash<K>>
@@ -117,8 +117,8 @@ public:
 		: ValueCount(copy.ValueCount)
 		, Allocator(copy.Allocator)
 	{
-		new (&Buckets, LuftNewMarker {}) BucketArray(copy.Buckets.GetLength(), Allocator);
-		for (usize i = 0; i < copy.Buckets.GetLength(); ++i)
+		new (&Buckets, LuftNewMarker {}) BucketArray(copy.Buckets.GetCount(), Allocator);
+		for (usize i = 0; i < copy.Buckets.GetCount(); ++i)
 		{
 			Buckets.Add(copy.Buckets[i]);
 		}
@@ -136,8 +136,8 @@ public:
 		ValueCount = copy.ValueCount;
 		Allocator = copy.Allocator;
 
-		new (&Buckets, LuftNewMarker {}) BucketArray(copy.Buckets.GetLength(), Allocator);
-		for (usize i = 0; i < copy.Buckets.GetLength(); ++i)
+		new (&Buckets, LuftNewMarker {}) BucketArray(copy.Buckets.GetCount(), Allocator);
+		for (usize i = 0; i < copy.Buckets.GetCount(); ++i)
 		{
 			Buckets.Add(copy.Buckets[i]);
 		}
@@ -198,7 +198,7 @@ public:
 	template<typename InputK>
 	bool Contains(const InputK& key) const requires IsValidHashTableKey<K, InputK>
 	{
-		const uint64 bucketIndex = Hash<InputK>{}(key) % Buckets.GetLength();
+		const uint64 bucketIndex = Hash<InputK>{}(key) % Buckets.GetCount();
 		const Array<Pair>& bucket = Buckets[bucketIndex];
 
 		return FindPairIndex<Pair, K, InputK>(bucket, key) != INDEX_NONE;
@@ -207,7 +207,7 @@ public:
 	template<typename InputK>
 	V& Get(const InputK& key) requires IsValidHashTableKey<K, InputK>
 	{
-		const uint64 bucketIndex = Hash<InputK>{}(key) % Buckets.GetLength();
+		const uint64 bucketIndex = Hash<InputK>{}(key) % Buckets.GetCount();
 		Array<Pair>& bucket = Buckets[bucketIndex];
 
 		const usize index = FindPairIndex<Pair, K, InputK>(bucket, key);
@@ -218,7 +218,7 @@ public:
 	template<typename InputK>
 	const V& Get(const InputK& key) const requires IsValidHashTableKey<K, InputK>
 	{
-		const uint64 bucketIndex = Hash<InputK>{}(key) % Buckets.GetLength();
+		const uint64 bucketIndex = Hash<InputK>{}(key) % Buckets.GetCount();
 		const Array<Pair>& bucket = Buckets[bucketIndex];
 
 		const usize index = FindPairIndex<Pair, K, InputK>(bucket, key);
@@ -229,7 +229,7 @@ public:
 	template<typename InputK>
 	V& GetOrAdd(const InputK& key) requires IsValidHashTableKey<K, InputK>
 	{
-		const uint64 bucketIndex = Hash<InputK>{}(key) % Buckets.GetLength();
+		const uint64 bucketIndex = Hash<InputK>{}(key) % Buckets.GetCount();
 		Array<Pair>& bucket = Buckets[bucketIndex];
 
 		const usize index = FindPairIndex<Pair, K, InputK>(bucket, key);
@@ -248,12 +248,12 @@ public:
 		}
 		++ValueCount;
 
-		return bucket[bucket.GetLength() - 1].Value;
+		return bucket[bucket.GetCount() - 1].Value;
 	}
 
 	V& GetOrAdd(K&& key)
 	{
-		const uint64 bucketIndex = Hash<K>{}(key) % Buckets.GetLength();
+		const uint64 bucketIndex = Hash<K>{}(key) % Buckets.GetCount();
 		Array<Pair>& bucket = Buckets[bucketIndex];
 
 		const usize index = FindPairIndex<Pair, K, K>(bucket, key);
@@ -265,12 +265,12 @@ public:
 		bucket.Add(Pair { Move(key), {} });
 		++ValueCount;
 
-		return bucket[bucket.GetLength() - 1].Value;
+		return bucket[bucket.GetCount() - 1].Value;
 	}
 
 	bool Add(const K& key, const V& value)
 	{
-		const uint64 bucketIndex = Hash<K>{}(key) % Buckets.GetLength();
+		const uint64 bucketIndex = Hash<K>{}(key) % Buckets.GetCount();
 		Array<Pair>& bucket = Buckets[bucketIndex];
 
 		const usize index = FindPairIndex<Pair, K, K>(Buckets[bucketIndex], key);
@@ -287,7 +287,7 @@ public:
 
 	bool Add(K&& key, V&& value)
 	{
-		const uint64 bucketIndex = Hash<K>{}(key) % Buckets.GetLength();
+		const uint64 bucketIndex = Hash<K>{}(key) % Buckets.GetCount();
 		Array<Pair>& bucket = Buckets[bucketIndex];
 
 		const usize index = FindPairIndex<Pair, K, K>(Buckets[bucketIndex], key);
@@ -305,7 +305,7 @@ public:
 	template<typename InputK>
 	void Remove(const InputK& key) requires IsValidHashTableKey<K, InputK>
 	{
-		const uint64 bucketIndex = Hash<InputK>{}(key) % Buckets.GetLength();
+		const uint64 bucketIndex = Hash<InputK>{}(key) % Buckets.GetCount();
 
 		const usize index = FindPairIndex<Pair, K, InputK>(Buckets[bucketIndex], key);
 		CHECK(index != INDEX_NONE);
@@ -347,7 +347,7 @@ private:
 	usize FindFirstUsedBucket() const
 	{
 		usize index = INDEX_NONE;
-		for (usize i = 0; i < Buckets.GetLength(); ++i)
+		for (usize i = 0; i < Buckets.GetCount(); ++i)
 		{
 			if (!Buckets[i].IsEmpty())
 			{

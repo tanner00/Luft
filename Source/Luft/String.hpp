@@ -26,9 +26,9 @@ public:
 		return Buffer[index];
 	}
 
-	bool operator==(StringView b) const
+	bool operator==(StringView rhs) const
 	{
-		return Platform::StringCompare(Buffer, Length, b.Buffer, b.Length);
+		return Platform::StringCompare(Buffer, Length, rhs.Buffer, rhs.Length);
 	}
 
 	static StringView Empty()
@@ -221,9 +221,9 @@ public:
 		return Buffer[index];
 	}
 
-	bool operator==(const String& b) const
+	bool operator==(const String& rhs) const
 	{
-		return Platform::StringCompare(Buffer, Length, b.Buffer, b.Length);
+		return Platform::StringCompare(Buffer, Length, rhs.Buffer, rhs.Length);
 	}
 
 	operator StringView() const
@@ -317,7 +317,7 @@ public:
 		Length = 0;
 	}
 
-	Array<String> Split(char delimiter, Allocator* allocator = &GlobalAllocator::Get())
+	Array<String> Split(char delimiter, Allocator* allocator = &GlobalAllocator::Get()) const
 	{
 		CHECK(allocator);
 

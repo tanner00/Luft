@@ -2,20 +2,20 @@
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
 
 <Type Name="Array&lt;*&gt;">
-	<DisplayString>Length = {Length}, Capacity = {Capacity}</DisplayString>
+	<DisplayString>Count = {Count}, Capacity = {Capacity}</DisplayString>
 	<Expand>
 		<ArrayItems>
-			<Size>Length</Size>
+			<Size>Count</Size>
 			<ValuePointer>Elements</ValuePointer>
 		</ArrayItems>
 	</Expand>
 </Type>
 
 <Type Name="ArrayView&lt;*&gt;">
-	<DisplayString>Length = {Length}</DisplayString>
+	<DisplayString>Count = {Length}</DisplayString>
 	<Expand>
 		<ArrayItems>
-			<Size>Length</Size>
+			<Size>Count</Size>
 			<ValuePointer>Elements</ValuePointer>
 		</ArrayItems>
 	</Expand>
