@@ -317,9 +317,9 @@ public:
 	void Clear()
 	{
 		ValueCount = 0;
-		for (usize i = 0; i < Buckets.GetLength(); ++i)
+		for (Array<Pair>& bucket : Buckets)
 		{
-			Buckets.Clear();
+			bucket.Clear();
 		}
 	}
 
