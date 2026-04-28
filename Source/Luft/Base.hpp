@@ -32,6 +32,9 @@ using float64 = double;
 #define UINT32_MAX 4294967295
 #define UINT64_MAX 18446744073709551615
 
+static_assert(sizeof(usize) == sizeof(uint64));
+#define USIZE_MAX UINT64_MAX
+
 #define FLOAT32_MAX 3.40282e+38f
 #define FLOAT64_MAX 1.79769e+308
 #define INFINITY (FLOAT64_MAX * 2.0)
