@@ -200,11 +200,11 @@ uint8* ReadEntireFile(StringView filePath, usize* outSize, Allocator* allocator)
 	return fileData;
 }
 
-double GetTime()
+float64 GetTime()
 {
 	uint64 time;
 	CHECK(QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(&time)));
-	return static_cast<double>(time) / static_cast<double>(Frequency);
+	return static_cast<float64>(time) / static_cast<float64>(Frequency);
 }
 
 bool IsQuitRequested()

@@ -52,8 +52,8 @@ HASH_PRIMITIVE(uint64);
 
 HASH_PRIMITIVE(char);
 
-HASH_PRIMITIVE(float);
-HASH_PRIMITIVE(double);
+HASH_PRIMITIVE(float32);
+HASH_PRIMITIVE(float64);
 
 inline uint64 StringHash(const void* key, usize length)
 {

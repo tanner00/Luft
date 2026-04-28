@@ -47,7 +47,7 @@ Array<String> GetCommandLineArguments(Allocator* allocator = &GlobalAllocator::G
 
 uint8* ReadEntireFile(StringView filePath, usize* outSize, Allocator* allocator = &GlobalAllocator::Get());
 
-double GetTime();
+float64 GetTime();
 
 bool IsQuitRequested();
 void ProcessEvents();

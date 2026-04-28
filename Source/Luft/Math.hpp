@@ -3,15 +3,15 @@
 #include "Base.hpp"
 #include "Error.hpp"
 
-inline constexpr float Pi = 3.14159265358979323846f;
-inline constexpr float DegreesToRadians = Pi / 180.0f;
-inline constexpr float RadiansToDegrees = 180.0f / Pi;
+inline constexpr float32 Pi = 3.14159265358979323846f;
+inline constexpr float32 DegreesToRadians = Pi / 180.0f;
+inline constexpr float32 RadiansToDegrees = 180.0f / Pi;
 
-float SquareRoot(float x);
+float32 SquareRoot(float32 x);
 
-float Sine(float x);
-float Cosine(float x);
-float Tangent(float x);
+float32 Sine(float32 x);
+float32 Cosine(float32 x);
+float32 Tangent(float32 x);
 
 template<typename T>
 T Min(T a, T b)
@@ -37,9 +37,9 @@ T Clamp(T value, T min, T max)
 	return (value > max) ? max : ((value < min) ? min : value);
 }
 
-inline bool IsAlmostEqual(float a, float b, float epsilon)
+inline bool IsAlmostEqual(float32 a, float32 b, float32 epsilon)
 {
-	const float difference = a - b;
+	const float32 difference = a - b;
 	return difference < epsilon && difference > -epsilon;
 }
 
@@ -60,7 +60,7 @@ inline uint64 NextMultipleOf(uint64 value, uint64 multiple)
 	return (((value - 1) / multiple) + 1) * multiple;
 }
 
-inline bool IsPointInRectangle(float x, float y, float left, float right, float top, float bottom)
+inline bool IsPointInRectangle(float32 x, float32 y, float32 left, float32 right, float32 top, float32 bottom)
 {
 	return x >= left && x <= right && y >= top && y <= bottom;
 }
@@ -72,7 +72,7 @@ public:
 
 	Vector() = default;
 
-	Vector(float x, float y, float z)
+	Vector(float32 x, float32 y, float32 z)
 		: X(x)
 		, Y(y)
 		, Z(z)
@@ -89,7 +89,7 @@ public:
 		return Vector { X - rhs.X, Y - rhs.Y, Z - rhs.Z };
 	}
 
-	Vector operator*(float scale) const
+	Vector operator*(float32 scale) const
 	{
 		return Vector { scale * X, scale * Y, scale * Z };
 	}
@@ -99,24 +99,24 @@ public:
 		return Vector { -X, -Y, -Z };
 	}
 
-	float GetMagnitudeSquared() const
+	float32 GetMagnitudeSquared() const
 	{
 		return X * X + Y * Y + Z * Z;
 	}
 
-	float GetMagnitude() const
+	float32 GetMagnitude() const
 	{
 		return SquareRoot(GetMagnitudeSquared());
 	}
 
 	Vector GetNormalized() const
 	{
-		const float length = GetMagnitude();
+		const float32 length = GetMagnitude();
 		CHECK(length != 0.0f);
 		return Vector { X / length, Y / length, Z / length };
 	}
 
-	float Dot(const Vector& rhs) const
+	float32 Dot(const Vector& rhs) const
 	{
 		return X * rhs.X + Y * rhs.Y + Z * rhs.Z;
 	}
@@ -131,9 +131,9 @@ public:
 		};
 	}
 
-	float X;
-	float Y;
-	float Z;
+	float32 X;
+	float32 Y;
+	float32 Z;
 };
 
 inline const Vector Vector::Zero = { 0.0f, 0.0f, 0.0f };
@@ -147,10 +147,10 @@ public:
 
 	Matrix() = default;
 
-	Matrix(float m00, float m10, float m20, float m30,
-		   float m01, float m11, float m21, float m31,
-		   float m02, float m12, float m22, float m32,
-		   float m03, float m13, float m23, float m33)
+	Matrix(float32 m00, float32 m10, float32 m20, float32 m30,
+		   float32 m01, float32 m11, float32 m21, float32 m31,
+		   float32 m02, float32 m12, float32 m22, float32 m32,
+		   float32 m03, float32 m13, float32 m23, float32 m33)
 		: M00(m00), M10(m10), M20(m20), M30(m30)
 		, M01(m01), M11(m11), M21(m21), M31(m31)
 		, M02(m02), M12(m12), M22(m22), M32(m32)
@@ -158,7 +158,7 @@ public:
 	{
 	}
 
-	static Matrix Scale(float scaleX, float scaleY, float scaleZ)
+	static Matrix Scale(float32 scaleX, float32 scaleY, float32 scaleZ)
 	{
 		return Matrix
 		{
@@ -174,7 +174,7 @@ public:
 		return Scale(scale.X, scale.Y, scale.Z);
 	}
 
-	static Matrix Translation(float x, float y, float z)
+	static Matrix Translation(float32 x, float32 y, float32 z)
 	{
 		return Matrix
 		{
@@ -203,7 +203,7 @@ public:
 		};
 	}
 
-	static Matrix Orthographic(float leftX, float rightX, float topY, float bottomY, float nearZ, float farZ)
+	static Matrix Orthographic(float32 leftX, float32 rightX, float32 topY, float32 bottomY, float32 nearZ, float32 farZ)
 	{
 		CHECK(rightX - leftX != 0.0f && topY - bottomY != 0.0f && farZ - nearZ != 0.0f);
 		return Matrix
@@ -215,13 +215,13 @@ public:
 		};
 	}
 
-	static Matrix Perspective(float fieldOfViewYRadians, float aspectRatio, float nearZ)
+	static Matrix Perspective(float32 fieldOfViewYRadians, float32 aspectRatio, float32 nearZ)
 	{
-		const float inverseHeight = Tangent(0.5f * fieldOfViewYRadians);
+		const float32 inverseHeight = Tangent(0.5f * fieldOfViewYRadians);
 		CHECK(inverseHeight != 0.0f);
-		const float height = 1.0f / inverseHeight;
+		const float32 height = 1.0f / inverseHeight;
 		CHECK(aspectRatio != 0.0f);
-		const float width = height / aspectRatio;
+		const float32 width = height / aspectRatio;
 		return Matrix
 		{
 			width, 0.0f,   0.0f,   0.0f,
@@ -231,15 +231,15 @@ public:
 		};
 	}
 
-	static Matrix Perspective(float fieldOfViewYRadians, float aspectRatio, float nearZ, float farZ)
+	static Matrix Perspective(float32 fieldOfViewYRadians, float32 aspectRatio, float32 nearZ, float32 farZ)
 	{
-		const float inverseHeight = Tangent(0.5f * fieldOfViewYRadians);
+		const float32 inverseHeight = Tangent(0.5f * fieldOfViewYRadians);
 		CHECK(inverseHeight != 0.0f);
-		const float height = 1.0f / inverseHeight;
+		const float32 height = 1.0f / inverseHeight;
 		CHECK(aspectRatio != 0.0f);
-		const float width = height / aspectRatio;
+		const float32 width = height / aspectRatio;
 		CHECK(nearZ - farZ != 0.0f);
-		const float range = farZ / (nearZ - farZ);
+		const float32 range = farZ / (nearZ - farZ);
 		return Matrix
 		{
 			width, 0.0f,   0.0f,          0.0f,
@@ -260,13 +260,13 @@ public:
 		};
 	}
 
-	float& operator()(usize row, usize column)
+	float32& operator()(usize row, usize column)
 	{
 		CHECK(column * Dimension + row < Dimension * Dimension);
 		return (&M00)[column * Dimension + row];
 	}
 
-	const float& operator()(usize row, usize column) const
+	const float32& operator()(usize row, usize column) const
 	{
 		CHECK(column * Dimension + row < Dimension * Dimension);
 		return (&M00)[column * Dimension + row];
@@ -320,7 +320,7 @@ public:
 		};
 	}
 
-	Matrix operator*(float scale) const
+	Matrix operator*(float32 scale) const
 	{
 		return Matrix
 		{
@@ -353,32 +353,32 @@ public:
 
 	Matrix GetInverse() const
 	{
-		const float determinant = M00 * (M11 * (M22 * M33 - M23 * M32) - M21 * (M12 * M33 - M13 * M32) + M31 * (M12 * M23 - M13 * M22)) -
+		const float32 determinant = M00 * (M11 * (M22 * M33 - M23 * M32) - M21 * (M12 * M33 - M13 * M32) + M31 * (M12 * M23 - M13 * M22)) -
 								  M10 * (M01 * (M22 * M33 - M23 * M32) - M21 * (M02 * M33 - M03 * M32) + M31 * (M02 * M23 - M03 * M22)) +
 								  M20 * (M01 * (M12 * M33 - M13 * M32) - M11 * (M02 * M33 - M03 * M32) + M31 * (M02 * M13 - M03 * M12)) -
 								  M30 * (M01 * (M12 * M23 - M13 * M22) - M11 * (M02 * M23 - M03 * M22) + M21 * (M02 * M13 - M03 * M12));
 		CHECK(determinant != 0.0f);
-		const float inverseDeterminant = 1.0f / determinant;
+		const float32 inverseDeterminant = 1.0f / determinant;
 
-		const float i00 =  (M11 * (M22 * M33 - M32 * M23) - M21 * (M12 * M33 - M32 * M13) + M31 * (M12 * M23 - M22 * M13)) * inverseDeterminant;
-		const float i01 = -(M01 * (M22 * M33 - M32 * M23) - M21 * (M02 * M33 - M32 * M03) + M31 * (M02 * M23 - M22 * M03)) * inverseDeterminant;
-		const float i02 =  (M01 * (M12 * M33 - M32 * M13) - M11 * (M02 * M33 - M32 * M03) + M31 * (M02 * M13 - M12 * M03)) * inverseDeterminant;
-		const float i03 = -(M01 * (M12 * M23 - M22 * M13) - M11 * (M02 * M23 - M22 * M03) + M21 * (M02 * M13 - M12 * M03)) * inverseDeterminant;
+		const float32 i00 =  (M11 * (M22 * M33 - M32 * M23) - M21 * (M12 * M33 - M32 * M13) + M31 * (M12 * M23 - M22 * M13)) * inverseDeterminant;
+		const float32 i01 = -(M01 * (M22 * M33 - M32 * M23) - M21 * (M02 * M33 - M32 * M03) + M31 * (M02 * M23 - M22 * M03)) * inverseDeterminant;
+		const float32 i02 =  (M01 * (M12 * M33 - M32 * M13) - M11 * (M02 * M33 - M32 * M03) + M31 * (M02 * M13 - M12 * M03)) * inverseDeterminant;
+		const float32 i03 = -(M01 * (M12 * M23 - M22 * M13) - M11 * (M02 * M23 - M22 * M03) + M21 * (M02 * M13 - M12 * M03)) * inverseDeterminant;
 
-		const float i10 = -(M10 * (M22 * M33 - M32 * M23) - M20 * (M12 * M33 - M32 * M13) + M30 * (M12 * M23 - M22 * M13)) * inverseDeterminant;
-		const float i11 =  (M00 * (M22 * M33 - M32 * M23) - M20 * (M02 * M33 - M32 * M03) + M30 * (M02 * M23 - M22 * M03)) * inverseDeterminant;
-		const float i12 = -(M00 * (M12 * M33 - M32 * M13) - M10 * (M02 * M33 - M32 * M03) + M30 * (M02 * M13 - M12 * M03)) * inverseDeterminant;
-		const float i13 =  (M00 * (M12 * M23 - M22 * M13) - M10 * (M02 * M23 - M22 * M03) + M20 * (M02 * M13 - M12 * M03)) * inverseDeterminant;
+		const float32 i10 = -(M10 * (M22 * M33 - M32 * M23) - M20 * (M12 * M33 - M32 * M13) + M30 * (M12 * M23 - M22 * M13)) * inverseDeterminant;
+		const float32 i11 =  (M00 * (M22 * M33 - M32 * M23) - M20 * (M02 * M33 - M32 * M03) + M30 * (M02 * M23 - M22 * M03)) * inverseDeterminant;
+		const float32 i12 = -(M00 * (M12 * M33 - M32 * M13) - M10 * (M02 * M33 - M32 * M03) + M30 * (M02 * M13 - M12 * M03)) * inverseDeterminant;
+		const float32 i13 =  (M00 * (M12 * M23 - M22 * M13) - M10 * (M02 * M23 - M22 * M03) + M20 * (M02 * M13 - M12 * M03)) * inverseDeterminant;
 
-		const float i20 =  (M10 * (M21 * M33 - M31 * M23) - M20 * (M11 * M33 - M31 * M13) + M30 * (M11 * M23 - M21 * M13)) * inverseDeterminant;
-		const float i21 = -(M00 * (M21 * M33 - M31 * M23) - M20 * (M01 * M33 - M31 * M03) + M30 * (M01 * M23 - M21 * M03)) * inverseDeterminant;
-		const float i22 =  (M00 * (M11 * M33 - M31 * M13) - M10 * (M01 * M33 - M31 * M03) + M30 * (M01 * M13 - M11 * M03)) * inverseDeterminant;
-		const float i23 = -(M00 * (M11 * M23 - M21 * M13) - M10 * (M01 * M23 - M21 * M03) + M20 * (M01 * M13 - M11 * M03)) * inverseDeterminant;
+		const float32 i20 =  (M10 * (M21 * M33 - M31 * M23) - M20 * (M11 * M33 - M31 * M13) + M30 * (M11 * M23 - M21 * M13)) * inverseDeterminant;
+		const float32 i21 = -(M00 * (M21 * M33 - M31 * M23) - M20 * (M01 * M33 - M31 * M03) + M30 * (M01 * M23 - M21 * M03)) * inverseDeterminant;
+		const float32 i22 =  (M00 * (M11 * M33 - M31 * M13) - M10 * (M01 * M33 - M31 * M03) + M30 * (M01 * M13 - M11 * M03)) * inverseDeterminant;
+		const float32 i23 = -(M00 * (M11 * M23 - M21 * M13) - M10 * (M01 * M23 - M21 * M03) + M20 * (M01 * M13 - M11 * M03)) * inverseDeterminant;
 
-		const float i30 = -(M10 * (M21 * M32 - M31 * M22) - M20 * (M11 * M32 - M31 * M12) + M30 * (M11 * M22 - M21 * M12)) * inverseDeterminant;
-		const float i31 =  (M00 * (M21 * M32 - M31 * M22) - M20 * (M01 * M32 - M31 * M02) + M30 * (M01 * M22 - M21 * M02)) * inverseDeterminant;
-		const float i32 = -(M00 * (M11 * M32 - M31 * M12) - M10 * (M01 * M32 - M31 * M02) + M30 * (M01 * M12 - M11 * M02)) * inverseDeterminant;
-		const float i33 =  (M00 * (M11 * M22 - M21 * M12) - M10 * (M01 * M22 - M21 * M02) + M20 * (M01 * M12 - M11 * M02)) * inverseDeterminant;
+		const float32 i30 = -(M10 * (M21 * M32 - M31 * M22) - M20 * (M11 * M32 - M31 * M12) + M30 * (M11 * M22 - M21 * M12)) * inverseDeterminant;
+		const float32 i31 =  (M00 * (M21 * M32 - M31 * M22) - M20 * (M01 * M32 - M31 * M02) + M30 * (M01 * M22 - M21 * M02)) * inverseDeterminant;
+		const float32 i32 = -(M00 * (M11 * M32 - M31 * M12) - M10 * (M01 * M32 - M31 * M02) + M30 * (M01 * M12 - M11 * M02)) * inverseDeterminant;
+		const float32 i33 =  (M00 * (M11 * M22 - M21 * M12) - M10 * (M01 * M22 - M21 * M02) + M20 * (M01 * M12 - M11 * M02)) * inverseDeterminant;
 
 		return Matrix
 		{
@@ -400,10 +400,10 @@ public:
 		};
 	}
 
-	float M00, M10, M20, M30;
-	float M01, M11, M21, M31;
-	float M02, M12, M22, M32;
-	float M03, M13, M23, M33;
+	float32 M00, M10, M20, M30;
+	float32 M01, M11, M21, M31;
+	float32 M02, M12, M22, M32;
+	float32 M03, M13, M23, M33;
 };
 
 inline const Matrix Matrix::Identity =
@@ -421,14 +421,14 @@ public:
 
 	Quaternion() = default;
 
-	Quaternion(float x, float y, float z, float w)
+	Quaternion(float32 x, float32 y, float32 z, float32 w)
 		: X(x), Y(y), Z(z), W(w)
 	{
 	}
 
-	static Quaternion AxisAngle(const Vector& axis, const float angleRadians)
+	static Quaternion AxisAngle(const Vector& axis, const float32 angleRadians)
 	{
-		const float sineTheta2 = Sine(angleRadians / 2);
+		const float32 sineTheta2 = Sine(angleRadians / 2);
 		return Quaternion
 		{
 			sineTheta2 * axis.X,
@@ -456,7 +456,7 @@ public:
 
 	Quaternion GetNormalized() const
 	{
-		const float magnitude = SquareRoot(X * X + Y * Y + Z * Z + W * W);
+		const float32 magnitude = SquareRoot(X * X + Y * Y + Z * Z + W * W);
 		return Quaternion { X / magnitude, Y / magnitude, Z / magnitude, W / magnitude };
 	}
 
@@ -469,18 +469,18 @@ public:
 
 	Matrix ToMatrix() const
 	{
-		const float ww = W * W;
-		const float xx = X * X;
-		const float yy = Y * Y;
-		const float zz = Z * Z;
+		const float32 ww = W * W;
+		const float32 xx = X * X;
+		const float32 yy = Y * Y;
+		const float32 zz = Z * Z;
 
-		const float wx = W * X;
-		const float wy = W * Y;
-		const float wz = W * Z;
+		const float32 wx = W * X;
+		const float32 wy = W * Y;
+		const float32 wz = W * Z;
 
-		const float xy = X * Y;
-		const float xz = X * Z;
-		const float yz = Y * Z;
+		const float32 xy = X * Y;
+		const float32 xz = X * Z;
+		const float32 yz = Y * Z;
 
 		return Matrix
 		{
@@ -491,10 +491,10 @@ public:
 		};
 	}
 
-	float X;
-	float Y;
-	float Z;
-	float W;
+	float32 X;
+	float32 Y;
+	float32 Z;
+	float32 W;
 };
 
 inline const Quaternion Quaternion::Identity = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -508,10 +508,10 @@ inline void DecomposeTransform(const Matrix& transform, Vector* translation, Qua
 		translation->Z = transform(2, 3);
 	}
 
-	const float determinant = transform(0, 0) * (transform(1, 1) * transform(2, 2) - transform(1, 2) * transform(2, 1)) -
+	const float32 determinant = transform(0, 0) * (transform(1, 1) * transform(2, 2) - transform(1, 2) * transform(2, 1)) -
 							  transform(1, 0) * (transform(0, 1) * transform(2, 2) - transform(2, 1) * transform(0, 2)) +
 							  transform(2, 0) * (transform(0, 1) * transform(1, 2) - transform(1, 1) * transform(0, 2));
-	const float sign = (determinant < 0.0f) ? -1.0f : +1.0f;
+	const float32 sign = (determinant < 0.0f) ? -1.0f : +1.0f;
 
 	const Vector transformScale =
 	{
@@ -526,11 +526,11 @@ inline void DecomposeTransform(const Matrix& transform, Vector* translation, Qua
 
 	if (orientation)
 	{
-		const float inverseScaleX = (transformScale.X == 0.0f) ? 0.0f : (1.0f / transformScale.X);
-		const float inverseScaleY = (transformScale.Y == 0.0f) ? 0.0f : (1.0f / transformScale.Y);
-		const float inverseScaleZ = (transformScale.Z == 0.0f) ? 0.0f : (1.0f / transformScale.Z);
+		const float32 inverseScaleX = (transformScale.X == 0.0f) ? 0.0f : (1.0f / transformScale.X);
+		const float32 inverseScaleY = (transformScale.Y == 0.0f) ? 0.0f : (1.0f / transformScale.Y);
+		const float32 inverseScaleZ = (transformScale.Z == 0.0f) ? 0.0f : (1.0f / transformScale.Z);
 
-		const float transformOrientation[3][3] =
+		const float32 transformOrientation[3][3] =
 		{
 			{ transform(0, 0) * inverseScaleX, transform(0, 1) * inverseScaleY, transform(0, 2) * inverseScaleZ },
 			{ transform(1, 0) * inverseScaleX, transform(1, 1) * inverseScaleY, transform(1, 2) * inverseScaleZ },
@@ -540,16 +540,16 @@ inline void DecomposeTransform(const Matrix& transform, Vector* translation, Qua
 		const uint32 control = (transformOrientation[2][2] < 0) ?
 							((transformOrientation[0][0] > transformOrientation[1][1]) ? 0 : 1) :
 							((transformOrientation[0][0] < -transformOrientation[1][1]) ? 2 : 3);
-		const float sign1 = (control & 2) ? -1.0f : +1.0f;
-		const float sign2 = (control & 1) ? -1.0f : +1.0f;
-		const float sign3 = ((control - 1) & 2) ? -1.0f : +1.0f;
+		const float32 sign1 = (control & 2) ? -1.0f : +1.0f;
+		const float32 sign2 = (control & 1) ? -1.0f : +1.0f;
+		const float32 sign3 = ((control - 1) & 2) ? -1.0f : +1.0f;
 
-		const float t = 1.0f - (sign3 * transformOrientation[0][0]) -
+		const float32 t = 1.0f - (sign3 * transformOrientation[0][0]) -
 							   (sign2 * transformOrientation[1][1]) -
 							   (sign1 * transformOrientation[2][2]);
-		const float s = 0.5f / SquareRoot(t);
+		const float32 s = 0.5f / SquareRoot(t);
 
-		float* orientationComponents = reinterpret_cast<float*>(orientation);
+		float32* orientationComponents = reinterpret_cast<float32*>(orientation);
 		orientationComponents[control ^ 0] = s * t;
 		orientationComponents[control ^ 1] = s * (transformOrientation[1][0] + sign1 * transformOrientation[0][1]);
 		orientationComponents[control ^ 2] = s * (transformOrientation[0][2] + sign2 * transformOrientation[2][0]);

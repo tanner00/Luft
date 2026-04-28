@@ -14,6 +14,9 @@ using usize = unsigned long long;
 
 using bool32 = uint32;
 
+using float32 = float;
+using float64 = double;
+
 #define INT8_MIN (-127 - 1)
 #define INT16_MIN (-32767 - 1)
 #define INT32_MIN (-2147483647 - 1)

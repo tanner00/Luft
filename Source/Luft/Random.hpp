@@ -39,9 +39,9 @@ public:
 		return RandomUInt32PCG(&Context);
 	}
 
-	float Float01()
+	float32 Float01()
 	{
-		return static_cast<float>(UInt32()) / static_cast<float>(UINT32_MAX);
+		return static_cast<float32>(UInt32()) / static_cast<float32>(UINT32_MAX);
 	}
 
 private:
