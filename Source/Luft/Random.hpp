@@ -39,7 +39,7 @@ public:
 		return RandomUInt32PCG(&Context);
 	}
 
-	float32 Float01()
+	float32 Float32UNorm()
 	{
 		return static_cast<float32>(UInt32()) / static_cast<float32>(UINT32_MAX);
 	}

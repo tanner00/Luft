@@ -322,13 +322,13 @@ public:
 		CHECK(allocator);
 
 		Array<String> parts(allocator);
-		usize start = 0;
+		usize startIndex = 0;
 		for (usize index = 0; index <= Length; ++index)
 		{
 			if (index == Length || Buffer[index] == delimiter)
 			{
-				parts.Add(String(StringView(Buffer + start, index - start), allocator));
-				start = index + 1;
+				parts.Add(String(StringView(Buffer + startIndex, index - startIndex), allocator));
+				startIndex = index + 1;
 			}
 		}
 

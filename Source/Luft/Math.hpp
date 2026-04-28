@@ -203,19 +203,19 @@ public:
 		};
 	}
 
-	static Matrix Orthographic(float32 leftX, float32 rightX, float32 topY, float32 bottomY, float32 nearZ, float32 farZ)
+	static Matrix Orthographic(float32 left, float32 right, float32 top, float32 bottom, float32 near, float32 far)
 	{
-		CHECK(rightX - leftX != 0.0f && topY - bottomY != 0.0f && farZ - nearZ != 0.0f);
+		CHECK(right - left != 0.0f && top - bottom != 0.0f && far - near != 0.0f);
 		return Matrix
 		{
-			2.0f / (rightX - leftX),              0.0f,                                 0.0f,                    0.0f,
-			0.0f,                                 2.0f / (topY - bottomY),              0.0f,                    0.0f,
-			0.0f,                                 0.0f,                                 -1.0f / (farZ - nearZ),  0.0f,
-			-(rightX + leftX) / (rightX - leftX), -(topY + bottomY) / (topY - bottomY), -nearZ / (farZ - nearZ), 1.0f,
+			2.0f / (right - left),            0.0f,                             0.0f,                 0.0f,
+			0.0f,                             2.0f / (top - bottom),            0.0f,                 0.0f,
+			0.0f,                             0.0f,                             -1.0f / (far - near), 0.0f,
+			-(right + left) / (right - left), -(top + bottom) / (top - bottom), -near / (far - near), 1.0f,
 		};
 	}
 
-	static Matrix Perspective(float32 fieldOfViewYRadians, float32 aspectRatio, float32 nearZ)
+	static Matrix Perspective(float32 fieldOfViewYRadians, float32 aspectRatio, float32 near)
 	{
 		const float32 inverseHeight = Tangent(0.5f * fieldOfViewYRadians);
 		CHECK(inverseHeight != 0.0f);
@@ -224,28 +224,28 @@ public:
 		const float32 width = height / aspectRatio;
 		return Matrix
 		{
-			width, 0.0f,   0.0f,   0.0f,
-			0.0f,  height, 0.0f,   0.0f,
-			0.0f,  0.0f,   -1.0f,  -1.0f,
-			0.0f,  0.0f,   -nearZ, 0.0f,
+			width, 0.0f,   0.0f,  0.0f,
+			0.0f,  height, 0.0f,  0.0f,
+			0.0f,  0.0f,   -1.0f, -1.0f,
+			0.0f,  0.0f,   -near, 0.0f,
 		};
 	}
 
-	static Matrix Perspective(float32 fieldOfViewYRadians, float32 aspectRatio, float32 nearZ, float32 farZ)
+	static Matrix Perspective(float32 fieldOfViewYRadians, float32 aspectRatio, float32 near, float32 far)
 	{
 		const float32 inverseHeight = Tangent(0.5f * fieldOfViewYRadians);
 		CHECK(inverseHeight != 0.0f);
 		const float32 height = 1.0f / inverseHeight;
 		CHECK(aspectRatio != 0.0f);
 		const float32 width = height / aspectRatio;
-		CHECK(nearZ - farZ != 0.0f);
-		const float32 range = farZ / (nearZ - farZ);
+		CHECK(near - far != 0.0f);
+		const float32 range = far / (near - far);
 		return Matrix
 		{
-			width, 0.0f,   0.0f,          0.0f,
-			0.0f,  height, 0.0f,          0.0f,
-			0.0f,  0.0f,   range,         -1.0f,
-			0.0f,  0.0f,   range * nearZ, 0.0f,
+			width, 0.0f,   0.0f,         0.0f,
+			0.0f,  height, 0.0f,         0.0f,
+			0.0f,  0.0f,   range,        -1.0f,
+			0.0f,  0.0f,   range * near, 0.0f,
 		};
 	}
 
@@ -256,7 +256,7 @@ public:
 			1.0f, 0.0f, 0.0f,  0.0f,
 			0.0f, 1.0f, 0.0f,  0.0f,
 			0.0f, 0.0f, -1.0f, 0.0f,
-			0.0f, 0.0f, 1.0f,  1.0f
+			0.0f, 0.0f, 1.0f,  1.0f,
 		};
 	}
 

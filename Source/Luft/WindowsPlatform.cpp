@@ -151,15 +151,14 @@ Array<String> GetCommandLineArguments(Allocator* allocator)
 {
 	CHECK(allocator);
 
-	Array<String> result(allocator);
-
 	int32 argumentsCount = 0;
 	wchar_t** arguments = CommandLineToArgvW(GetCommandLineW(), &argumentsCount);
 	if (arguments == nullptr)
 	{
-		return result;
+		return Array<String>(allocator);
 	}
 
+	Array<String> result(argumentsCount - 1, allocator);
 	for (int32 index = 1; index < argumentsCount; ++index)
 	{
 		result.Add(Windows::WideToUTF8(arguments[index], allocator));
