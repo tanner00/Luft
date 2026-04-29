@@ -5,8 +5,7 @@
 #include "Error.hpp"
 #include "String.hpp"
 
-#define NOMINMAX
-#define WIN32_LEAN_AND_MEAN
+#include "WindowsDefine.hpp"
 #include <windows.h>
 #include "WindowsUndefine.hpp"
 

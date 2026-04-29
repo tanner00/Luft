@@ -11,8 +11,7 @@
 #include "Platform.hpp"
 #include "Windows.hpp"
 
-#define NOMINMAX
-#define WIN32_LEAN_AND_MEAN
+#include "WindowsDefine.hpp"
 #include <windows.h>
 #include <shellapi.h>
 #include "WindowsUndefine.hpp"
