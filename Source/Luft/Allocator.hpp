@@ -63,3 +63,19 @@ private:
 
 	usize Used = 0;
 };
+
+class StaticAllocator final : public Allocator
+{
+public:
+	static StaticAllocator& Get()
+	{
+		static StaticAllocator instance;
+		return instance;
+	}
+
+	void* Allocate(usize size) override;
+	void Deallocate(void* ptr, usize size) override;
+
+private:
+	StaticAllocator() = default;
+};

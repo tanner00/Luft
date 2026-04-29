@@ -15,3 +15,14 @@ void GlobalAllocator::Deallocate(void* ptr, usize size)
 	}
 	Platform::Deallocate(ptr);
 }
+
+void* StaticAllocator::Allocate(usize size)
+{
+	return Platform::Allocate(size);
+}
+
+void StaticAllocator::Deallocate(void* ptr, usize size)
+{
+	(void)size;
+	Platform::Deallocate(ptr);
+}

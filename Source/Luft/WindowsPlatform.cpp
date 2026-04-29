@@ -26,7 +26,7 @@ static uint64 Frequency = 0;
 
 static bool QuitRequested = false;
 
-static HashTable<uint16, Key> KeyMap(32, &GlobalAllocator::Get());
+static HashTable<uint16, Key> KeyMap(32, &StaticAllocator::Get());
 static bool KeyPressed[static_cast<usize>(Key::Count)] = {};
 static bool KeyPressedOnce[static_cast<usize>(Key::Count)] = {};
 
