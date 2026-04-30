@@ -25,7 +25,7 @@ static uint64 Frequency = 0;
 
 static bool QuitRequested = false;
 
-static HashTable<uint16, Key> KeyMap(32, &StaticAllocator::Get());
+static HashTable<uint16, Key> KeyMap(32, &GlobalAllocator::Get());
 static bool KeyPressed[static_cast<usize>(Key::Count)] = {};
 static bool KeyPressedOnce[static_cast<usize>(Key::Count)] = {};
 
@@ -553,12 +553,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	Platform::KeyMap.Add(VK_RETURN, Platform::Key::Enter);
 	Platform::KeyMap.Add(VK_SHIFT, Platform::Key::Shift);
 
-	const usize startingUsed = GlobalAllocator::Get().GetUsed();
-
 	Start();
-
-	const usize endingUsed = GlobalAllocator::Get().GetUsed();
-	CHECK(endingUsed - startingUsed == 0);
 
 	return 0;
 }

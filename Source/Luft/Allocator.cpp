@@ -1,5 +1,6 @@
 #include "Allocator.hpp"
 #include "PlatformCore.hpp"
+#include "Error.hpp"
 
 void* GlobalAllocator::Allocate(usize size)
 {
@@ -16,13 +17,24 @@ void GlobalAllocator::Deallocate(void* ptr, usize size)
 	Platform::Deallocate(ptr);
 }
 
-void* StaticAllocator::Allocate(usize size)
+#if DEBUG
+class GlobalAllocatorChecker : public NoCopy
 {
-	return Platform::Allocate(size);
-}
+public:
+	GlobalAllocatorChecker()
+		: StartUsed(GlobalAllocator::Get().GetUsed())
+	{
+	}
 
-void StaticAllocator::Deallocate(void* ptr, usize size)
-{
-	(void)size;
-	Platform::Deallocate(ptr);
-}
+	~GlobalAllocatorChecker()
+	{
+		const usize endUsed = GlobalAllocator::Get().GetUsed();
+		CHECK(endUsed - StartUsed == 0);
+	}
+
+	usize StartUsed;
+};
+
+#pragma init_seg(lib)
+static GlobalAllocatorChecker GlobalAllocatorChecker;
+#endif
