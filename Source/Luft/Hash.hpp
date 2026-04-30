@@ -7,8 +7,8 @@ inline uint64 HashFnv1a(const void* key, usize keySize)
 {
 	const uint8* keyBytes = static_cast<const uint8*>(key);
 
-	static constexpr uint64 fnvOffset = 14695981039346656037ULL;
-	static constexpr uint64 fnvPrime = 1099511628211ULL;
+	static constexpr uint64 fnvOffset = 14695981039346656037ull;
+	static constexpr uint64 fnvPrime = 1099511628211ull;
 
 	uint64 hash = fnvOffset;
 	for (usize i = 0; i < keySize; ++i)

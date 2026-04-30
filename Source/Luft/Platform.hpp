@@ -21,6 +21,7 @@ enum class Key : uint8
 	A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
 	Left, Right, Up, Down,
 	Escape, Backspace, Space, Enter, Shift,
+
 	Count,
 };
 
@@ -28,6 +29,7 @@ enum class MouseButton : uint8
 {
 	Left,
 	Right,
+
 	Count,
 };
 

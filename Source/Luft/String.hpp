@@ -82,7 +82,7 @@ private:
 
 inline StringView operator ""_view(const char* literal, usize length) noexcept
 {
-	return StringView { literal, length };
+	return StringView(literal, length);
 }
 
 class String

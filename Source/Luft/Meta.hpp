@@ -34,6 +34,23 @@ template<typename T>
 using RemoveReferenceType = typename RemoveReference<T>::Type;
 
 template<typename T>
+struct IsTriviallyCopyable : Constant<bool, __is_trivially_copyable(T)> {};
+
+template<typename T>
+struct IsTriviallyDestructible : Constant<bool, __is_trivially_destructible(T)> {};
+
+template<typename T>
+struct RemoveCv { using Type = T; };
+template<typename T>
+struct RemoveCv<const T> { using Type = T; };
+template<typename T>
+struct RemoveCv<volatile T> { using Type = T; };
+template<typename T>
+struct RemoveCv<const volatile T> { using Type = T; };
+template<typename T>
+using RemoveCvType = typename RemoveCv<T>::Type;
+
+template<typename T>
 constexpr RemoveReferenceType<T>&& Move(T&& toMove) noexcept
 {
 	using NoReference = RemoveReferenceType<T>;
@@ -61,20 +78,3 @@ T&& Forward(RemoveReferenceType<T>&& toForward) noexcept
 {
 	return static_cast<T&&>(toForward);
 }
-
-template<typename T>
-struct IsTriviallyCopyable : Constant<bool, __is_trivially_copyable(T)> {};
-
-template<typename T>
-struct IsTriviallyDestructible : Constant<bool, __is_trivially_destructible(T)> {};
-
-template<typename T>
-struct RemoveCv { using Type = T; };
-template<typename T>
-struct RemoveCv<const T> { using Type = T; };
-template<typename T>
-struct RemoveCv<volatile T> { using Type = T; };
-template<typename T>
-struct RemoveCv<const volatile T> { using Type = T; };
-template<typename T>
-using RemoveCvType = typename RemoveCv<T>::Type;

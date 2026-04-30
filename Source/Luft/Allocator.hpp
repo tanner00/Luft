@@ -4,9 +4,7 @@
 #include "Meta.hpp"
 #include "NoCopy.hpp"
 
-struct LuftNewMarker
-{
-};
+struct LuftNewMarker {};
 
 inline void* operator new(usize size, void* at, LuftNewMarker) noexcept
 {
