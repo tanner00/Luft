@@ -78,3 +78,9 @@ T&& Forward(RemoveReferenceType<T>&& toForward) noexcept
 {
 	return static_cast<T&&>(toForward);
 }
+
+template<typename T>
+const T& AsConst(T& toConst) noexcept
+{
+	return toConst;
+}
