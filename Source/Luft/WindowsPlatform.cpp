@@ -360,8 +360,6 @@ static LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPA
 
 Window* CreateWindow(StringView title, uint32 drawWidth, uint32 drawHeight)
 {
-	CHECK(SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2));
-
 	const HMODULE instance = GetModuleHandleW(nullptr);
 
 	String className(&GlobalAllocator::Get());
@@ -544,6 +542,8 @@ extern void Start();
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
 	CHECK(QueryPerformanceFrequency(reinterpret_cast<LARGE_INTEGER*>(&Platform::Frequency)));
+
+	CHECK(SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2));
 
 	for (uint16 c = '0'; c <= '9'; ++c)
 	{
