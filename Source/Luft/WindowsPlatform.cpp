@@ -18,6 +18,8 @@
 
 #include <stdio.h>
 
+#define GET_NATIVE_WINDOW(window) *static_cast<HWND*>((window)->Native)
+
 namespace Platform
 {
 
@@ -414,7 +416,7 @@ Window* CreateWindow(StringView title, uint32 drawWidth, uint32 drawHeight)
 
 void DestroyWindow(Window* window)
 {
-	DestroyWindow(*static_cast<HWND*>(window->Native));
+	DestroyWindow(GET_NATIVE_WINDOW(window));
 	const wchar_t* classNamePersistentWide = reinterpret_cast<wchar_t*>(static_cast<uint8*>(window->Native) + sizeof(HWND));
 	UnregisterClassW(classNamePersistentWide, GetModuleHandleW(nullptr));
 	GlobalAllocator::Get().Deallocate(window->Native, sizeof(HWND) + wcslen(classNamePersistentWide) * sizeof(wchar_t) + sizeof(L'\0'));
@@ -423,18 +425,18 @@ void DestroyWindow(Window* window)
 
 void ShowWindow(const Window* window)
 {
-	ShowWindow(*static_cast<HWND*>(window->Native), SW_SHOWNORMAL);
+	ShowWindow(GET_NATIVE_WINDOW(window), SW_SHOWNORMAL);
 }
 
 void SetWindowTitle(const Window* window, StringView title)
 {
 	const Array<wchar_t> titleWide = Windows::UTF8ToWide(title);
-	CHECK(SetWindowTextW(*static_cast<HWND*>(window->Native), titleWide.GetData()));
+	CHECK(SetWindowTextW(GET_NATIVE_WINDOW(window), titleWide.GetData()));
 }
 
 bool IsWindowFocused(const Window* window)
 {
-	return GetActiveWindow() == *static_cast<HWND*>(window->Native);
+	return GetActiveWindow() == GET_NATIVE_WINDOW(window);
 }
 
 bool IsKeyPressed(Key key)
@@ -493,7 +495,7 @@ void SetInputMode(const Window* window, InputMode mode)
 	}
 	case InputMode::Captured:
 	{
-		const HWND nativeWindow = *static_cast<HWND*>(window->Native);
+		const HWND nativeWindow = GET_NATIVE_WINDOW(window);
 
 		RECT screenRectangle;
 		CHECK(GetClientRect(nativeWindow, &screenRectangle));
