@@ -19,9 +19,16 @@ inline uint64 HashFnv1a(const void* key, usize keySize)
 	return hash;
 }
 
-inline uint64 HashCombine(uint64 hash1, uint64 hash2)
+template<typename T>
+T HashCombine(T hash1, T hash2)
 {
-	return hash1 ^ (hash2 + 0x9E3779B9 + (hash1 << 6) + (hash1 >> 2));
+	return hash1 ^ (hash2 + 0x9e3779b9 + (hash1 << 6) + (hash1 >> 2));
+}
+
+template<typename T, typename... Args>
+T HashCombine(T hash1, T hash2, Args... hashes) requires(IsSame<Args, T>::Value && ...)
+{
+	return HashCombine(HashCombine(hash1, hash2), hashes...);
 }
 
 template<typename K>
