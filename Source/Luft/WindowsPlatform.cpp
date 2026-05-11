@@ -37,6 +37,8 @@ static bool MouseButtonPressedOnce[static_cast<usize>(MouseButton::Count)] = {};
 static int32 MouseX = 0;
 static int32 MouseY = 0;
 
+static float64 MouseScrollY = 0.0;
+
 static InputMode CurrentInputMode = InputMode::Default;
 
 static MessageHandler MessageHandlerOverride = [](void*, uint32, uint64, uint64) -> bool { return false; };
@@ -223,6 +225,8 @@ void ProcessEvents()
 		justPressed = false;
 	}
 
+	MouseScrollY = 0.0;
+
 	MSG msg;
 	while (PeekMessageW(&msg, nullptr, 0, 0, PM_REMOVE))
 	{
@@ -346,6 +350,9 @@ static LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPA
 
 		return 0;
 	}
+	case WM_MOUSEWHEEL:
+		MouseScrollY = -GET_WHEEL_DELTA_WPARAM(wParam) / static_cast<float64>(WHEEL_DELTA);
+		return 0;
 	case WM_KILLFOCUS:
 		MemorySet(KeyPressed, false, sizeof(KeyPressed));
 		MemorySet(KeyPressedOnce, false, sizeof(KeyPressedOnce));
@@ -477,6 +484,11 @@ int32 GetMouseX()
 int32 GetMouseY()
 {
 	return MouseY;
+}
+
+float64 GetMouseScrollY()
+{
+	return MouseScrollY;
 }
 
 InputMode GetInputMode()

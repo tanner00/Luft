@@ -67,6 +67,7 @@ bool IsMouseButtonPressed(MouseButton button);
 bool IsMouseButtonPressedOnce(MouseButton button);
 int32 GetMouseX();
 int32 GetMouseY();
+float64 GetMouseScrollY();
 
 InputMode GetInputMode();
 void SetInputMode(const Window* window, InputMode mode);
