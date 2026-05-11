@@ -431,9 +431,9 @@ void DestroyWindow(Window* window)
 	GlobalAllocator::Get().Destroy(window);
 }
 
-void ShowWindow(const Window* window)
+void ShowWindow(const Window* window, bool maximized)
 {
-	ShowWindow(GET_NATIVE_WINDOW(window), SW_SHOWNORMAL);
+	ShowWindow(GET_NATIVE_WINDOW(window), maximized ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL);
 }
 
 void SetWindowTitle(const Window* window, StringView title)

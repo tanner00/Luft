@@ -56,7 +56,7 @@ void ProcessEvents();
 
 Window* CreateWindow(StringView title, uint32 drawWidth, uint32 drawHeight);
 void DestroyWindow(Window* window);
-void ShowWindow(const Window* window);
+void ShowWindow(const Window* window, bool maximized);
 void SetWindowTitle(const Window* window, StringView title);
 bool IsWindowFocused(const Window* window);
 
