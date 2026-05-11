@@ -319,8 +319,13 @@ static LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPA
 	}
 	case WM_MOUSEMOVE:
 	{
-		MouseX = static_cast<int32>(LOWORD(lParam));
-		MouseY = static_cast<int32>(HIWORD(lParam));
+		if (GetFocus() != window)
+		{
+			return 0;
+		}
+
+		MouseX = static_cast<int32>(static_cast<int16>(LOWORD(lParam)));
+		MouseY = static_cast<int32>(static_cast<int16>(HIWORD(lParam)));
 
 		if (CurrentInputMode == InputMode::Captured)
 		{
@@ -338,6 +343,7 @@ static LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPA
 			CHECK(ClientToScreen(window, &centerScreenPosition));
 			CHECK(SetCursorPos(centerScreenPosition.x, centerScreenPosition.y));
 		}
+
 		return 0;
 	}
 	case WM_KILLFOCUS:
@@ -345,6 +351,8 @@ static LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPA
 		MemorySet(KeyPressedOnce, false, sizeof(KeyPressedOnce));
 		MemorySet(MouseButtonPressed, false, sizeof(MouseButtonPressed));
 		MemorySet(MouseButtonPressedOnce, false, sizeof(MouseButtonPressedOnce));
+		MouseX = INT32_MIN;
+		MouseY = INT32_MIN;
 		return 0;
 	}
 	return DefWindowProcW(window, message, wParam, lParam);
