@@ -358,8 +358,7 @@ public:
 	{
 		if (Count == Capacity)
 		{
-			const usize doubleCapacity = Capacity * 2;
-			Grow(Capacity ? doubleCapacity : 8);
+			Grow(Capacity ? (Capacity * 2) : 8);
 		}
 		new (&Elements[Count], LuftNewMarker {}) T(Forward<Args>(args)...);
 		++Count;
