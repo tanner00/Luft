@@ -358,7 +358,7 @@ public:
 	{
 		if (Count == Capacity)
 		{
-			Grow(Capacity ? (Capacity * 2) : 8);
+			Grow(Capacity ? Capacity * 2 : 8);
 		}
 		new (&Elements[Count], LuftNewMarker {}) T(Forward<Args>(args)...);
 		++Count;

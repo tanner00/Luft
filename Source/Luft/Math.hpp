@@ -16,25 +16,25 @@ float32 Tangent(float32 x);
 template<typename T>
 T Min(T a, T b)
 {
-	return (a > b) ? b : a;
+	return a > b ? b : a;
 }
 
 template<typename T>
 T Max(T a, T b)
 {
-	return (a > b) ? a : b;
+	return a > b ? a : b;
 }
 
 template<typename T>
 T Absolute(T x)
 {
-	return (x > 0) ? x : -x;
+	return x > 0 ? x : -x;
 }
 
 template<typename T>
 T Clamp(T value, T min, T max)
 {
-	return (value > max) ? max : ((value < min) ? min : value);
+	return value > max ? max : value < min ? min : value;
 }
 
 inline bool IsAlmostEqual(float32 a, float32 b, float32 epsilon)
@@ -354,9 +354,9 @@ public:
 	Matrix GetInverse() const
 	{
 		const float32 determinant = M00 * (M11 * (M22 * M33 - M23 * M32) - M21 * (M12 * M33 - M13 * M32) + M31 * (M12 * M23 - M13 * M22)) -
-								  M10 * (M01 * (M22 * M33 - M23 * M32) - M21 * (M02 * M33 - M03 * M32) + M31 * (M02 * M23 - M03 * M22)) +
-								  M20 * (M01 * (M12 * M33 - M13 * M32) - M11 * (M02 * M33 - M03 * M32) + M31 * (M02 * M13 - M03 * M12)) -
-								  M30 * (M01 * (M12 * M23 - M13 * M22) - M11 * (M02 * M23 - M03 * M22) + M21 * (M02 * M13 - M03 * M12));
+									M10 * (M01 * (M22 * M33 - M23 * M32) - M21 * (M02 * M33 - M03 * M32) + M31 * (M02 * M23 - M03 * M22)) +
+									M20 * (M01 * (M12 * M33 - M13 * M32) - M11 * (M02 * M33 - M03 * M32) + M31 * (M02 * M13 - M03 * M12)) -
+									M30 * (M01 * (M12 * M23 - M13 * M22) - M11 * (M02 * M23 - M03 * M22) + M21 * (M02 * M13 - M03 * M12));
 		CHECK(determinant != 0.0f);
 		const float32 inverseDeterminant = 1.0f / determinant;
 
@@ -509,9 +509,9 @@ inline void DecomposeTransform(const Matrix& transform, Vector* translation, Qua
 	}
 
 	const float32 determinant = transform(0, 0) * (transform(1, 1) * transform(2, 2) - transform(1, 2) * transform(2, 1)) -
-							  transform(1, 0) * (transform(0, 1) * transform(2, 2) - transform(2, 1) * transform(0, 2)) +
-							  transform(2, 0) * (transform(0, 1) * transform(1, 2) - transform(1, 1) * transform(0, 2));
-	const float32 sign = (determinant < 0.0f) ? -1.0f : +1.0f;
+								transform(1, 0) * (transform(0, 1) * transform(2, 2) - transform(2, 1) * transform(0, 2)) +
+								transform(2, 0) * (transform(0, 1) * transform(1, 2) - transform(1, 1) * transform(0, 2));
+	const float32 sign = determinant < 0.0f ? -1.0f : 1.0f;
 
 	const Vector transformScale =
 	{
@@ -526,9 +526,9 @@ inline void DecomposeTransform(const Matrix& transform, Vector* translation, Qua
 
 	if (orientation)
 	{
-		const float32 inverseScaleX = (transformScale.X == 0.0f) ? 0.0f : (1.0f / transformScale.X);
-		const float32 inverseScaleY = (transformScale.Y == 0.0f) ? 0.0f : (1.0f / transformScale.Y);
-		const float32 inverseScaleZ = (transformScale.Z == 0.0f) ? 0.0f : (1.0f / transformScale.Z);
+		const float32 inverseScaleX = transformScale.X == 0.0f ? 0.0f : 1.0f / transformScale.X;
+		const float32 inverseScaleY = transformScale.Y == 0.0f ? 0.0f : 1.0f / transformScale.Y;
+		const float32 inverseScaleZ = transformScale.Z == 0.0f ? 0.0f : 1.0f / transformScale.Z;
 
 		const float32 transformOrientation[3][3] =
 		{
@@ -537,16 +537,13 @@ inline void DecomposeTransform(const Matrix& transform, Vector* translation, Qua
 			{ transform(2, 0) * inverseScaleX, transform(2, 1) * inverseScaleY, transform(2, 2) * inverseScaleZ },
 		};
 
-		const uint32 control = (transformOrientation[2][2] < 0) ?
-							((transformOrientation[0][0] > transformOrientation[1][1]) ? 0 : 1) :
-							((transformOrientation[0][0] < -transformOrientation[1][1]) ? 2 : 3);
-		const float32 sign1 = (control & 2) ? -1.0f : +1.0f;
-		const float32 sign2 = (control & 1) ? -1.0f : +1.0f;
-		const float32 sign3 = ((control - 1) & 2) ? -1.0f : +1.0f;
+		const uint32 control = transformOrientation[2][2] < 0 ? transformOrientation[0][0] > transformOrientation[1][1] ? 0 : 1
+															  : transformOrientation[0][0] < -transformOrientation[1][1] ? 2 : 3;
+		const float32 sign1 = control & 2 ? -1.0f : 1.0f;
+		const float32 sign2 = control & 1 ? -1.0f : 1.0f;
+		const float32 sign3 = control - 1 & 2 ? -1.0f : 1.0f;
 
-		const float32 t = 1.0f - (sign3 * transformOrientation[0][0]) -
-							   (sign2 * transformOrientation[1][1]) -
-							   (sign1 * transformOrientation[2][2]);
+		const float32 t = 1.0f - (sign3 * transformOrientation[0][0]) - (sign2 * transformOrientation[1][1]) - (sign1 * transformOrientation[2][2]);
 		const float32 s = 0.5f / SquareRoot(t);
 
 		float32* orientationComponents = reinterpret_cast<float32*>(orientation);

@@ -288,7 +288,7 @@ public:
 	{
 		if (Length == Capacity)
 		{
-			Grow(Capacity ? (Capacity * 2) : 32);
+			Grow(Capacity ? Capacity * 2 : 32);
 		}
 		Buffer[Length] = c;
 		++Length;
