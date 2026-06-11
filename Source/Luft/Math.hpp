@@ -358,27 +358,26 @@ public:
 									M20 * (M01 * (M12 * M33 - M13 * M32) - M11 * (M02 * M33 - M03 * M32) + M31 * (M02 * M13 - M03 * M12)) -
 									M30 * (M01 * (M12 * M23 - M13 * M22) - M11 * (M02 * M23 - M03 * M22) + M21 * (M02 * M13 - M03 * M12));
 		CHECK(determinant != 0.0f);
-		const float32 inverseDeterminant = 1.0f / determinant;
 
-		const float32 i00 =  (M11 * (M22 * M33 - M32 * M23) - M21 * (M12 * M33 - M32 * M13) + M31 * (M12 * M23 - M22 * M13)) * inverseDeterminant;
-		const float32 i01 = -(M01 * (M22 * M33 - M32 * M23) - M21 * (M02 * M33 - M32 * M03) + M31 * (M02 * M23 - M22 * M03)) * inverseDeterminant;
-		const float32 i02 =  (M01 * (M12 * M33 - M32 * M13) - M11 * (M02 * M33 - M32 * M03) + M31 * (M02 * M13 - M12 * M03)) * inverseDeterminant;
-		const float32 i03 = -(M01 * (M12 * M23 - M22 * M13) - M11 * (M02 * M23 - M22 * M03) + M21 * (M02 * M13 - M12 * M03)) * inverseDeterminant;
+		const float32 i00 =  (M11 * (M22 * M33 - M32 * M23) - M21 * (M12 * M33 - M32 * M13) + M31 * (M12 * M23 - M22 * M13)) / determinant;
+		const float32 i01 = -(M01 * (M22 * M33 - M32 * M23) - M21 * (M02 * M33 - M32 * M03) + M31 * (M02 * M23 - M22 * M03)) / determinant;
+		const float32 i02 =  (M01 * (M12 * M33 - M32 * M13) - M11 * (M02 * M33 - M32 * M03) + M31 * (M02 * M13 - M12 * M03)) / determinant;
+		const float32 i03 = -(M01 * (M12 * M23 - M22 * M13) - M11 * (M02 * M23 - M22 * M03) + M21 * (M02 * M13 - M12 * M03)) / determinant;
 
-		const float32 i10 = -(M10 * (M22 * M33 - M32 * M23) - M20 * (M12 * M33 - M32 * M13) + M30 * (M12 * M23 - M22 * M13)) * inverseDeterminant;
-		const float32 i11 =  (M00 * (M22 * M33 - M32 * M23) - M20 * (M02 * M33 - M32 * M03) + M30 * (M02 * M23 - M22 * M03)) * inverseDeterminant;
-		const float32 i12 = -(M00 * (M12 * M33 - M32 * M13) - M10 * (M02 * M33 - M32 * M03) + M30 * (M02 * M13 - M12 * M03)) * inverseDeterminant;
-		const float32 i13 =  (M00 * (M12 * M23 - M22 * M13) - M10 * (M02 * M23 - M22 * M03) + M20 * (M02 * M13 - M12 * M03)) * inverseDeterminant;
+		const float32 i10 = -(M10 * (M22 * M33 - M32 * M23) - M20 * (M12 * M33 - M32 * M13) + M30 * (M12 * M23 - M22 * M13)) / determinant;
+		const float32 i11 =  (M00 * (M22 * M33 - M32 * M23) - M20 * (M02 * M33 - M32 * M03) + M30 * (M02 * M23 - M22 * M03)) / determinant;
+		const float32 i12 = -(M00 * (M12 * M33 - M32 * M13) - M10 * (M02 * M33 - M32 * M03) + M30 * (M02 * M13 - M12 * M03)) / determinant;
+		const float32 i13 =  (M00 * (M12 * M23 - M22 * M13) - M10 * (M02 * M23 - M22 * M03) + M20 * (M02 * M13 - M12 * M03)) / determinant;
 
-		const float32 i20 =  (M10 * (M21 * M33 - M31 * M23) - M20 * (M11 * M33 - M31 * M13) + M30 * (M11 * M23 - M21 * M13)) * inverseDeterminant;
-		const float32 i21 = -(M00 * (M21 * M33 - M31 * M23) - M20 * (M01 * M33 - M31 * M03) + M30 * (M01 * M23 - M21 * M03)) * inverseDeterminant;
-		const float32 i22 =  (M00 * (M11 * M33 - M31 * M13) - M10 * (M01 * M33 - M31 * M03) + M30 * (M01 * M13 - M11 * M03)) * inverseDeterminant;
-		const float32 i23 = -(M00 * (M11 * M23 - M21 * M13) - M10 * (M01 * M23 - M21 * M03) + M20 * (M01 * M13 - M11 * M03)) * inverseDeterminant;
+		const float32 i20 =  (M10 * (M21 * M33 - M31 * M23) - M20 * (M11 * M33 - M31 * M13) + M30 * (M11 * M23 - M21 * M13)) / determinant;
+		const float32 i21 = -(M00 * (M21 * M33 - M31 * M23) - M20 * (M01 * M33 - M31 * M03) + M30 * (M01 * M23 - M21 * M03)) / determinant;
+		const float32 i22 =  (M00 * (M11 * M33 - M31 * M13) - M10 * (M01 * M33 - M31 * M03) + M30 * (M01 * M13 - M11 * M03)) / determinant;
+		const float32 i23 = -(M00 * (M11 * M23 - M21 * M13) - M10 * (M01 * M23 - M21 * M03) + M20 * (M01 * M13 - M11 * M03)) / determinant;
 
-		const float32 i30 = -(M10 * (M21 * M32 - M31 * M22) - M20 * (M11 * M32 - M31 * M12) + M30 * (M11 * M22 - M21 * M12)) * inverseDeterminant;
-		const float32 i31 =  (M00 * (M21 * M32 - M31 * M22) - M20 * (M01 * M32 - M31 * M02) + M30 * (M01 * M22 - M21 * M02)) * inverseDeterminant;
-		const float32 i32 = -(M00 * (M11 * M32 - M31 * M12) - M10 * (M01 * M32 - M31 * M02) + M30 * (M01 * M12 - M11 * M02)) * inverseDeterminant;
-		const float32 i33 =  (M00 * (M11 * M22 - M21 * M12) - M10 * (M01 * M22 - M21 * M02) + M20 * (M01 * M12 - M11 * M02)) * inverseDeterminant;
+		const float32 i30 = -(M10 * (M21 * M32 - M31 * M22) - M20 * (M11 * M32 - M31 * M12) + M30 * (M11 * M22 - M21 * M12)) / determinant;
+		const float32 i31 =  (M00 * (M21 * M32 - M31 * M22) - M20 * (M01 * M32 - M31 * M02) + M30 * (M01 * M22 - M21 * M02)) / determinant;
+		const float32 i32 = -(M00 * (M11 * M32 - M31 * M12) - M10 * (M01 * M32 - M31 * M02) + M30 * (M01 * M12 - M11 * M02)) / determinant;
+		const float32 i33 =  (M00 * (M11 * M22 - M21 * M12) - M10 * (M01 * M22 - M21 * M02) + M20 * (M01 * M12 - M11 * M02)) / determinant;
 
 		return Matrix
 		{
