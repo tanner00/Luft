@@ -1,3 +1,9 @@
+if CommonIncluded then
+	return
+end
+
+CommonIncluded = true
+
 language "C++"
 cppdialect "C++20"
 conformancemode "On"
